@@ -1,16 +1,3 @@
-<<<<<<< Updated upstream
-import React from "react";
-
-const Landing = ()=> {
-    return(
-        <div className="">
-            <p>This is for Landing page</p>
-        </div>
-    )
-}
-
-export default Landing 
-=======
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import bg4 from "../assets/bg/bg-4.png";
@@ -109,4 +96,4 @@ const Landing = () => {
 };
 
 export default Landing;
->>>>>>> Stashed changes
+
