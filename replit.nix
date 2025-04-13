@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.geckodriver
     pkgs.zlib
     pkgs.tk
     pkgs.tcl

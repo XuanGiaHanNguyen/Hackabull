@@ -544,21 +544,145 @@ body {
     font-size: 1rem;
 }
 
+.product-card {
+    background: rgba(32, 201, 151, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(32, 201, 151, 0.2);
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.product-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #20c997;
+    margin-bottom: 10px;
+}
+
+.product-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.product-description {
+    color: #596275;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.sustainability-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    background: rgba(32, 201, 151, 0.15);
+    color: #20c997;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.improvements-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(32, 201, 151, 0.05);
+    border-radius: 10px;
+}
+
+.improvement-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: rgba(32, 201, 151, 0.1);
+    border-left: 3px solid #20c997;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.rating-stars {
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+.eco-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #20c997;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
 .product-link {
-    display: block;
-    background-color: #20c997;
-    color: #000;
+    display: inline-block;
+    background: #20c997;
+    color: white;
     text-align: center;
-    padding: 10px;
-    border-radius: 6px;
+    padding: 12px 25px;
+    border-radius: 25px;
     text-decoration: none;
     font-weight: 600;
-    margin-top: auto;
-    transition: background-color 0.2s;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
 }
 
 .product-link:hover {
-    background-color: #1db585;
-    text-decoration: none;
-    color: #000;
+    background: #1db585;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(32, 201, 151, 0.3);
+    color: white;
+}
+
+.store-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.eco-stats {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(32, 201, 151, 0.05);
+    border-radius: 10px;
+}
+
+.eco-stat {
+    text-align: center;
+}
+
+.eco-stat-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #20c997;
+}
+
+.eco-stat-label {
+    font-size: 0.8rem;
+    color: #596275;
+}0;
 }
