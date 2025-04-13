@@ -32,10 +32,7 @@ const PriceComparision = () => {
             </div>
 
             {/* Footer */}
-            <div className="mt-8 flex justify-center gap-4">
-                <button className="px-6 py-2 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-200 transition-colors duration-200">
-                    Close
-                </button>
+            <div className="mt-4 flex justify-center gap-4">
                 <button className="px-3 py-2 bg-green-800 text-white rounded-md font-medium hover:bg-green-900 transition-colors duration-200">
                     Visit Best Price
                 </button>

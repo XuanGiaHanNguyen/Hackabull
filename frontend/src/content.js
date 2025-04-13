@@ -5,8 +5,8 @@
 const config = {
   captureDelay: 500,      // Delay between captures in ms
   scrollStep: 800,        // How many pixels to scroll each time
-  maxScrolls: 4,         // Maximum number of screenshots to take
-  minScrollHeight: 1000   // Only auto-capture if page is at least this tall
+  maxScrolls: 1,         // Maximum number of screenshots to take
+  minScrollHeight: 1600   // Only auto-capture if page is at least this tall
 };
 
 // State

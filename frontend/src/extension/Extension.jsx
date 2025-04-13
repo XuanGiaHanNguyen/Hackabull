@@ -32,7 +32,7 @@ function ExtensionPopup() {
                 if (message.product) {
                     setProduct(message.product);
                     console.log("Scan complete:", message.product);
-                    
+
                     // Update product title based on scan results
                     if (message.product.pageType === 'product' && message.product.products?.[0]?.title) {
                         setProductTitle(message.product.products[0].title);
@@ -72,13 +72,13 @@ function ExtensionPopup() {
                 { action: "SCAN_NOW" },
                 (response) => {
                     setLoading(false);
-                    
+
                     if (chrome.runtime.lastError) {
                         setError("Error communicating with page. Make sure you're on a supported shopping site.");
                         console.error("Error sending message:", chrome.runtime.lastError);
                         return;
                     }
-                    
+
                     if (response && response.success) {
                         // Just log to console and don't update UI with products
                         console.log("SCAN RESULTS:", response.data);
@@ -89,32 +89,37 @@ function ExtensionPopup() {
         });
     };
 
+
+    const openWebsite = () => {
+        // Replace with your actual website URL
+        const websiteUrl = "http://localhost:5173/"; // Change this to your actual URL
+        chrome.tabs.create({ url: websiteUrl });
+    };
+
+
     const [activeTab, setActiveTab] = useState('ecoRating');
 
     return (
         <div className="p-4 w-96 rounded-lg">
             <div className="flex justify-between items-center">
-                <h1 className="text-xl font-bold mb-2 text-[#3c5d55]">GreenCart</h1>
-                <div className="text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="9" cy="21" r="1"></circle>
-                        <circle cx="20" cy="21" r="1"></circle>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                    </svg>
-                </div>
+                <button
+                    onClick={openWebsite}
+                    className="text-xl font-bold mb-2 text-[#3c5d55] bg-transparent border-none cursor-pointer"
+                >
+                    🌱GreenCart
+                </button>
             </div>
-            
-            <div className="mb-4">
-                <button 
+
+            <div className="my-3">
+                <button
                     onClick={handleScanClick}
                     disabled={loading}
-                    className={`w-full py-2 px-4 rounded font-medium transition-colors ${
-                        loading 
-                            ? 'bg-gray-400 text-gray-700 cursor-not-allowed' 
-                            : 'bg-green-600 text-white hover:bg-green-700'
-                    }`}
+                    className={`w-full py-2 px-4 rounded font-medium transition-colors ${loading
+                        ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                        : 'bg-green-800 text-white hover:bg-green-900'
+                        }`}
                 >
-                    {loading ? 'Scanning...' : 'Scan Products'}
+                    {loading ? 'Scanning...' : 'Scan Product'}
                 </button>
             </div>
 
@@ -148,7 +153,7 @@ function ExtensionPopup() {
             <div className="p-5">
                 {activeTab === 'ecoRating' ? <EcoRatingContent /> : <PriceComparision />}
             </div>
-            
+
         </div>
     );
 }
