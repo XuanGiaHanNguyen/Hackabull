@@ -336,49 +336,37 @@ class SustainabilityAnalyzer:
         """Fixed implementation for image analysis"""
         if not hasattr(self, 'vision_model') or self.vision_model is None:
             try:
-                # Try using newer models first, as gemini-pro-vision is deprecated
+                # Use gemini-2.0-flash as specified by user
+                print("Attempting to use gemini-2.0-flash for image analysis")
                 try:
-                    # Try the recommended replacement model first
-                    self.vision_model = genai.GenerativeModel('gemini-1.5-flash')
-                    print("Using gemini-1.5-flash model")
-                except:
+                    self.vision_model = genai.GenerativeModel('gemini-2.0-flash')
+                    print("Successfully initialized gemini-2.0-flash")
+                except Exception as e1:
+                    print(f"Could not use gemini-2.0-flash: {e1}")
+                    # Try gemini-1.5-flash as a second choice
                     try:
-                        # Try other newer models
-                        self.vision_model = genai.GenerativeModel('gemini-1.5-pro')
-                        print("Using gemini-1.5-pro model")
-                    except:
-                        try:
-                            # Try gemini-2.0 models
-                            self.vision_model = genai.GenerativeModel('gemini-2.0-flash')
-                            print("Using gemini-2.0-flash model")
-                        except:
-                            # Last resort - find any available model with vision capabilities
-                            models = genai.list_models()
-                            vision_model_name = None
-                            
-                            # Prioritize newer models over deprecated ones
-                            for model_name in ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash']:
-                                for model in models:
-                                    if model_name in model.name.lower():
-                                        vision_model_name = model.name
-                                        print(f"Found model: {vision_model_name}")
-                                        break
-                                if vision_model_name:
+                        self.vision_model = genai.GenerativeModel('gemini-1.5-flash')
+                        print("Using gemini-1.5-flash instead")
+                    except Exception as e2:
+                        print(f"Could not use gemini-1.5-flash: {e2}")
+                        # Try any available vision model as last resort
+                        models = genai.list_models()
+                        vision_model_found = False
+                        
+                        # Search for other models with multimodal/vision capabilities
+                        for model in models:
+                            if "flash" in model.name.lower() and "1.0" not in model.name.lower():
+                                try:
+                                    print(f"Trying {model.name}")
+                                    self.vision_model = genai.GenerativeModel(model.name)
+                                    vision_model_found = True
+                                    print(f"Using {model.name} for image analysis")
                                     break
-                            
-                            # If still not found, try any vision model
-                            if not vision_model_name:
-                                for model in models:
-                                    # Avoid deprecated models
-                                    if "vision" in model.name.lower() and "1.0" not in model.name.lower():
-                                        vision_model_name = model.name
-                                        print(f"Using fallback model: {vision_model_name}")
-                                        break
-                            
-                            if vision_model_name:
-                                self.vision_model = genai.GenerativeModel(vision_model_name)
-                            else:
-                                return {"error": "No compatible vision models available. Please check your Gemini API access."}
+                                except:
+                                    continue
+                        
+                        if not vision_model_found:
+                            return {"error": "Could not find a suitable vision model. Please ensure your API key has access to gemini-2.0-flash or other vision models."}
             except Exception as e:
                 return {"error": f"Could not initialize vision model: {str(e)}"}
         
@@ -401,52 +389,67 @@ class SustainabilityAnalyzer:
                 return {"error": "Invalid image data. The uploaded file may be corrupted or empty."}
                 
             print(f"Image size: {len(image_bytes)} bytes")
-                
+            
+            # Get the file extension from the filename if available
+            mime_type = "image/jpeg"  # Default mime type
+            if hasattr(image_file, 'filename'):
+                filename = image_file.filename.lower()
+                if filename.endswith('.png'):
+                    mime_type = "image/png"
+                elif filename.endswith('.gif'):
+                    mime_type = "image/gif"
+                elif filename.endswith('.webp'):
+                    mime_type = "image/webp"
+            
             # Create a prompt for better image analysis
             prompt = """
-            Analyze this product image and provide:
-            1. Product identification - what is this specific product?
-            2. Material composition assessment 
+            Analyze this product image for sustainability assessment:
+            
+            1. Product identification - What specific product is shown in the image?
+            2. Material composition assessment - What materials appear to be used?
             3. Sustainability evaluation including:
                - Materials used and their environmental impact
                - Potential manufacturing process
                - Recyclability score (1-10)
                - Overall environmental impact score (1-10)
             
-            Be specific about sustainability aspects and potential improvements.
+            Be specific and detailed about sustainability aspects. If you see any eco-friendly labels or certifications, mention those.
             """
             
-            # Process with Gemini Vision - make sure the prompt is first and image data is the second parameter
+            # For gemini-2.0-flash, we need to use the correct content format
             generation_config = {
-                "temperature": 0.4,
+                "temperature": 0.2,  # Lower temperature for more focused analysis
                 "top_p": 0.95,
                 "top_k": 40,
                 "max_output_tokens": 1024,
             }
             
-            # Create the parts list with the prompt as text and the image data
+            # Create content parts properly for the model
             parts = [
                 {"text": prompt},
-                {"inline_data": {"mime_type": "image/jpeg", "data": image_bytes}}
+                {"inline_data": {"mime_type": mime_type, "data": image_bytes}}
             ]
             
+            print("Sending image to the vision model for analysis...")
             response = self.vision_model.generate_content(parts, generation_config=generation_config)
             
+            if not hasattr(response, 'text') or not response.text:
+                return {"error": "No response from the vision model. Please try a different image."}
+                
             # Extract product name and details from response
             response_text = response.text
             lines = response_text.split('\n')
             product_name = lines[0] if lines else "Unknown product"
             
-            # Use the response to create a detailed product description
-            product_description = response_text
+            print(f"Vision model identified: {product_name}")
             
-            # Run standard sustainability analysis on this description
-            sustainability_analysis = self.analyze_product_description(product_description)
+            # Extract sustainability insights
+            sustainability_analysis = self.analyze_product_description(response_text)
             
             return {
                 "image_analysis": {
                     "product_name": product_name,
-                    "description": product_description
+                    "description": response_text
                 },
                 "sustainability_analysis": sustainability_analysis
             }
@@ -455,7 +458,7 @@ class SustainabilityAnalyzer:
             print(f"Image analysis error: {error_message}")
             return {
                 "error": f"Image analysis failed: {error_message}",
-                "details": "The image analysis feature requires a properly formatted image file and a working connection to the Gemini API."
+                "details": "The image analysis feature requires a properly formatted image file and the Gemini API to have access to a vision model like gemini-2.0-flash."
             }
             
     def format_image_analysis_for_display(self, analysis_result):
