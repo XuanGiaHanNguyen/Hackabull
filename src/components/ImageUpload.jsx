@@ -1,7 +1,5 @@
 
 import { useState } from 'react';
-import AnalysisResults from './AnalysisResults';
-import EcoAlternatives from './EcoAlternatives';
 
 export default function ImageUpload() {
   const [loading, setLoading] = useState(false);
@@ -55,39 +53,43 @@ export default function ImageUpload() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Product Image</label>
-            <input
-              type="file"
+            <input 
+              type="file" 
               name="image"
               accept="image/*"
-              className="w-full p-2 rounded bg-gray-700 text-white"
-              required
+              className="block w-full text-sm text-gray-400
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-green-600 file:text-white
+                hover:file:bg-green-700"
             />
           </div>
+          
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded transition"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50"
           >
             {loading ? 'Analyzing...' : 'Analyze Image'}
           </button>
         </form>
 
         {error && (
-          <div className="mt-4 p-4 bg-red-500/20 border border-red-500 rounded text-red-400">
+          <div className="mt-4 text-red-500 bg-red-100 p-3 rounded">
             {error}
           </div>
         )}
-      </div>
 
-      {results && (
-        <>
-          <AnalysisResults analysis={results.analysis} formatted={results.formatted_analysis} />
-          {results.alternatives?.length > 0 && (
-            <EcoAlternatives alternatives={results.alternatives} />
-          )}
-        </>
-      )}
+        {results && (
+          <div className="mt-6">
+            <h4 className="text-xl font-semibold mb-3">Analysis Results</h4>
+            <pre className="bg-gray-700 p-4 rounded overflow-x-auto">
+              {JSON.stringify(results, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
