@@ -956,14 +956,24 @@ class SustainabilityAnalyzer:
     
     def _generate_fallback_image_analysis(self):
         """Generate a fallback image analysis when API call fails"""
-        # Generate various greenrashing risk levels for more realistic responses
-        import random
+        # Generate greenwashing risk based on product claims and certifications
+        # Count various eco-claims and certifications to determine risk level
+        eco_claims = ["eco", "green", "natural", "sustainable", "environmentally friendly"]
+        certification_terms = ["certified", "verified", "certified organic", "fair trade", "fsc"]
         
-        # Randomly select risk level with weighted probability
-        # More products should show Medium/High risk when making eco claims without verification
-        risk_options = ["Low", "Medium", "High"]
-        risk_weights = [0.2, 0.5, 0.3]  # 20% Low, 50% Medium, 30% High
-        greenwashing_risk = random.choices(risk_options, weights=risk_weights, k=1)[0]
+        claim_count = sum(1 for claim in eco_claims if claim in description.lower())
+        cert_count = sum(1 for cert in certification_terms if cert in description.lower())
+        
+        # Determine risk level based on claims vs certifications
+        if claim_count > 2 and cert_count == 0:
+            greenwashing_risk = "High"
+        elif claim_count > 0 and cert_count == 0:
+            greenwashing_risk = "Medium"
+        elif claim_count == 0:
+            greenwashing_risk = "Low"
+        else:
+            # If there are both claims and certifications, assess the ratio
+            greenwashing_risk = "Medium" if claim_count > cert_count * 2 else "Low"
         
         # Customize justification based on risk level
         if greenwashing_risk == "High":
