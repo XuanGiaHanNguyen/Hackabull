@@ -3,13 +3,11 @@ const cheerio = require('cheerio');
 
 // Helper function to calculate sustainability score
 const calculateSustainabilityScore = (productData) => {
-  // This would be more complex in a real application
   let score = 3; // Default middle score
   
-  // Example logic - check for keywords in the title or description
   const sustainabilityKeywords = ['eco', 'sustainable', 'organic', 'recycled', 'green'];
   for (const keyword of sustainabilityKeywords) {
-    if (productData.title.toLowerCase().includes(keyword) || 
+    if (productData.title?.toLowerCase().includes(keyword) || 
         (productData.description && productData.description.toLowerCase().includes(keyword))) {
       score += 1;
     }
@@ -20,32 +18,36 @@ const calculateSustainabilityScore = (productData) => {
 
 exports.searchProducts = async (query) => {
   try {
-    const response = await axios.get(`https://www.snapdeal.com/search?keyword=${encodeURIComponent(query)}`, {
+    // Use the correct eBay search URL format
+    const response = await axios.get(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml',
+        'Accept-Language': 'en-US,en;q=0.9'
       }
     });
     
     const $ = cheerio.load(response.data);
     const products = [];
     
-    // This selector would need to be updated based on Snapdeal's current HTML structure
-    $('.product-tuple-listing').each((i, el) => {
-      const linkElement = $(el).find('a.dp-widget-link');
+    // Updated selector for current eBay HTML structure
+    $('.s-item__wrapper').each((i, el) => {
+      const linkElement = $(el).find('.s-item__link');
       if (!linkElement.length) return;
       
       const productUrl = linkElement.attr('href');
       if (!productUrl) return;
       
       // Extract ID from URL
-      const urlParts = productUrl.split('/');
-      const id = urlParts[urlParts.length - 1].split('?')[0];
+      const urlMatch = productUrl.match(/\/(\d+)\?/);
+      const id = urlMatch ? urlMatch[1] : null;
+      if (!id) return;
       
-      const title = $(el).find('.product-title').text().trim();
-      const priceText = $(el).find('.product-price').text().trim();
+      const title = $(el).find('.s-item__title').text().trim();
+      const priceText = $(el).find('.s-item__price').text().trim();
       const price = priceText ? parseFloat(priceText.replace(/[^0-9.]/g, '')) : null;
       
-      const imageUrl = $(el).find('.product-image img').attr('src');
+      const imageUrl = $(el).find('.s-item__image-img').attr('src');
       
       if (title && price) {
         const productData = { id, title, price, imageUrl, url: productUrl };
@@ -58,55 +60,56 @@ exports.searchProducts = async (query) => {
     
     return products;
   } catch (error) {
-    console.error('Error searching Snapdeal products:', error);
+    console.error('Error searching ebay products:', error);
     return [];
   }
 };
 
 exports.getProductDetails = async (productId) => {
   try {
-    // Construct URL from ID - this is a simplified approach
-    const url = `https://www.snapdeal.com/product/${productId}`;
+    // Correct eBay item URL format
+    const url = `https://www.ebay.com/itm/${productId}`;
     
     const response = await axios.get(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml',
+        'Accept-Language': 'en-US,en;q=0.9'
       }
     });
     
     const $ = cheerio.load(response.data);
     
-    const title = $('h1.pdp-e-i-head').text().trim();
-    const priceText = $('span.payBlkBig').text().trim();
+    const title = $('.x-item-title__mainTitle').text().trim();
+    const priceText = $('.x-price-primary').text().trim();
     const price = priceText ? parseFloat(priceText.replace(/[^0-9.]/g, '')) : null;
     
-    // Get images
+    // Get images - updated selectors
     const images = [];
-    $('#bx-pager a img').each((i, el) => {
+    $('.ux-image-carousel-item img').each((i, el) => {
       const src = $(el).attr('src');
       if (src) {
-        // Convert thumbnail URL to full-size image URL
-        const fullSizeUrl = src.replace('-55-55', '-512-512');
-        images.push(fullSizeUrl);
+        images.push(src);
       }
     });
     
-    // If no thumbnails, try to get main image
+    // Backup for image if main carousel not found
     if (images.length === 0) {
-      const mainImage = $('.cloudzoom').attr('src');
+      const mainImage = $('.ux-image-carousel img').attr('src');
       if (mainImage) {
         images.push(mainImage);
       }
     }
     
     // Extract description
-    const description = $('.detailssubbox').text().trim();
+    const description = $('#tab1 .product-description').text().trim() || 
+                        $('.d-item-description-wrapper').text().trim();
     
     // Extract specifications
     const specs = {};
-    $('.spec-body tr').each((i, el) => {
-      const key = $(el).find('td.spec-title').text().trim();
-      const value = $(el).find('td.spec-value').text().trim();
+    $('.x-product-details__table tr').each((i, el) => {
+      const key = $(el).find('th').text().trim();
+      const value = $(el).find('td').text().trim();
       if (key && value) {
         specs[key] = value;
       }
@@ -127,7 +130,7 @@ exports.getProductDetails = async (productId) => {
       sustainabilityLevel: calculateSustainabilityScore(productData)
     };
   } catch (error) {
-    console.error('Error getting Snapdeal product details:', error);
+    console.error('Error getting ebay product details:', error);
     throw error;
   }
 };

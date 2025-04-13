@@ -1,6 +1,6 @@
 const amazonService = require('../services/amazonService');
-const flipkartService = require('../services/flipkartService');
-const snapdealService = require('../services/snapdealService');
+const walmartService = require('../services/walmartService');
+const ebayService = require('../services/ebayService');
 
 exports.searchProducts = async (req, res) => {
   try {
@@ -11,17 +11,17 @@ exports.searchProducts = async (req, res) => {
     }
 
     // Fetch products from different services in parallel
-    const [amazonProducts, flipkartProducts, snapdealProducts] = await Promise.all([
+    const [amazonProducts, walmartProducts, ebayProducts] = await Promise.all([
       amazonService.searchProducts(query),
-      flipkartService.searchProducts(query),
-      snapdealService.searchProducts(query)
+      walmartService.searchProducts(query),
+      ebayService.searchProducts(query)
     ]);
 
     // Combine and format results
     const allProducts = [
       ...amazonProducts.map(p => ({ ...p, source: 'amazon' })),
-      ...flipkartProducts.map(p => ({ ...p, source: 'flipkart' })),
-      ...snapdealProducts.map(p => ({ ...p, source: 'snapdeal' }))
+      ...walmartProducts.map(p => ({ ...p, source: 'walmart' })),
+      ...ebayProducts.map(p => ({ ...p, source: 'ebay' }))
     ];
 
     res.json({ products: allProducts });
@@ -47,11 +47,11 @@ exports.getProductDetails = async (req, res) => {
       case 'amazon':
         productDetails = await amazonService.getProductDetails(productId);
         break;
-      case 'flipkart':
-        productDetails = await flipkartService.getProductDetails(productId);
+      case 'walmart':
+        productDetails = await walmartService.getProductDetails(productId);
         break;
-      case 'snapdeal':
-        productDetails = await snapdealService.getProductDetails(productId);
+      case 'ebay':
+        productDetails = await ebayService.getProductDetails(productId);
         break;
       default:
         return res.status(400).json({ error: 'Invalid source' });
