@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import banner from "../../assets/bg/banner.png"
-import { SeedIcon, MenuIcon } from "../../assets/icon"
-import { isAuthenticated, logoutUser } from "../Auth/authService";
+import banner from "../assets/bg/banner1.png"
+import { SeedIcon, MenuIcon } from "../assets/icon"
+import { isAuthenticated, logoutUser } from "./Auth/authService";
 
-const Searching = () => {
+const Marketplace = () => {
     const [location, setLocation] = useState('');
     const [budget, setBudget] = useState('');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -137,7 +137,7 @@ const Searching = () => {
             }}
           >
             <h1 className="text-7xl font-medium mb-8 text-[rgba(93,64,55,0.9)]">
-              <span className="font-bold text-[#5D4037]">Searching</span>
+              <span className="font-bold text-[#5D4037]">Marketplace</span>
             </h1>
             
             <div className="flex rounded-full bg-white shadow-lg overflow-hidden max-w-4xl w-full mx-4">
@@ -181,9 +181,19 @@ const Searching = () => {
           {/* Modified Filter and Items Display Section */}
           <div className="bg-[#eae9e3] flex flex-row flex-1">
             {/* Filter Section */}
-            <div className="w-1/4 p-4">
-              <div className="bg-white rounded-xl shadow-md p-6 h-full">
-                <h2 className="text-2xl font-semibold text-[#4d6b5a] mb-6 text-left">
+            <div className="w-1/4 p-4 flex flex-col gap-4">
+
+            <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between">
+                <h2 className="text-2xl font-semibold text-[#4d6b5a]">
+                    Retailer
+                </h2>
+                <button className="bg-[#4d6b5a] text-white px-4 py-2 rounded-lg hover:bg-[#3c5548] transition">
+                    Create Post
+                </button>
+            </div>
+
+              <div className="bg-white rounded-xl shadow-md p-6 ">
+                <h2 className="text-2xl font-semibold text-[#4d6b5a] mb-4 text-left">
                   Filter
                 </h2>
                 
@@ -328,4 +338,4 @@ const Searching = () => {
     );
 };
 
-export default Searching;
+export default Marketplace;

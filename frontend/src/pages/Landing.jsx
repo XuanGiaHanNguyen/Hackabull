@@ -33,6 +33,7 @@ const Landing = () => {
 
   const handleSearch = () => {
     console.log('Searching for:', { location, budget });
+    navigate("/search")
   };
 
   const handleLogout = () => {
