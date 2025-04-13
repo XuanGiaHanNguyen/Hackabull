@@ -840,8 +840,8 @@ class EcoRecommendationEngine:
                     </a>
                 </div>
                 """
-                return html
+            return html
 
-            except Exception as e:
-                logger.error(f"Error formatting alternative: {str(e)}")
-                return f"<div class=\"alert alert-danger\">Error formatting product: {str(e)}</div>"
+        except Exception as e:
+            logger.error(f"Error formatting alternative: {str(e)}")
+            return f"<div class=\"alert alert-danger\">Error formatting product: {str(e)}</div>"
