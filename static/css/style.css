@@ -425,3 +425,126 @@ body {
     text-align: center;
     font-weight: 600;
 }
+
+/* Styled product cards for eco-friendly alternatives */
+.product-card {
+    background-color: rgba(34, 34, 34, 0.5);
+    border-radius: 12px;
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(32, 201, 151, 0.2);
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    border-color: rgba(32, 201, 151, 0.4);
+}
+
+.product-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #20c997, #20c997cc);
+}
+
+.product-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #20c997;
+    position: relative;
+    padding-bottom: 8px;
+}
+
+.product-name::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background-color: rgba(32, 201, 151, 0.4);
+}
+
+.product-price {
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    color: #fff;
+    background-color: rgba(32, 201, 151, 0.2);
+    padding: 5px 10px;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.product-description {
+    margin-bottom: 15px;
+    flex-grow: 1;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.improvements-container {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.improvements-container h6 {
+    color: #20c997;
+    margin-bottom: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.improvement-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background-color: rgba(32, 201, 151, 0.15);
+    border-left: 3px solid #20c997;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+}
+
+.improvement-item::before {
+    content: "✓";
+    color: #20c997;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.product-link {
+    display: block;
+    background-color: #20c997;
+    color: #000;
+    text-align: center;
+    padding: 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: auto;
+    transition: background-color 0.2s;
+}
+
+.product-link:hover {
+    background-color: #1db585;
+    text-decoration: none;
+    color: #000;
+}
