@@ -1,6 +1,74 @@
 $(document).ready(function() {
     // Load categories on page load
     loadCategories();
+    
+    // Handle category clicks
+    $(document).on('click', '.category-card', function() {
+        const categoryId = $(this).data('category-id');
+        const categoryName = $(this).data('category-name');
+        loadCategoryProducts(categoryId, categoryName);
+    });
+});
+
+// Function to load categories
+function loadCategories() {
+    $.get('/categories', function(response) {
+        const categoriesList = $('#categories-list');
+        categoriesList.empty();
+        
+        response.categories.forEach(category => {
+            const categoryCard = `
+                <div class="col-md-3 mb-4">
+                    <div class="category-card card h-100" data-category-id="${category.id}" data-category-name="${category.name}">
+                        <div class="card-body text-center">
+                            <i class="fas fa-${category.icon} fa-2x mb-3"></i>
+                            <h5 class="card-title">${category.name}</h5>
+                        </div>
+                    </div>
+                </div>`;
+            categoriesList.append(categoryCard);
+        });
+    });
+}
+
+// Function to load products for a category
+function loadCategoryProducts(categoryId, categoryName) {
+    $('#category-title').html(`<i class="fas fa-list me-2"></i>${categoryName}`);
+    $('#category-results').show();
+    $('#eco-alternatives-content').html('<div class="text-center py-4"><div class="spinner-border text-success" role="status"></div><p class="mt-2">Loading eco-friendly products...</p></div>');
+    
+    $.get(`/category_products/${categoryId}`, function(response) {
+        const productsContainer = $('#eco-alternatives-content');
+        productsContainer.empty();
+        
+        if (response.products && response.products.length > 0) {
+            response.products.forEach(product => {
+                const productHtml = formatProductCard(product);
+                productsContainer.append(productHtml);
+            });
+        } else {
+            productsContainer.html('<div class="alert alert-info">No eco-friendly products found for this category.</div>');
+        }
+    }).fail(function(error) {
+        $('#eco-alternatives-content').html('<div class="alert alert-danger">Error loading products. Please try again.</div>');
+    });
+}
+
+// Function to format product card
+function formatProductCard(product) {
+    const productInfo = product.product;
+    return `
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">${productInfo.name}</h5>
+                    <p class="card-text">${productInfo.description}</p>
+                    <p class="price">$${productInfo.price.toFixed(2)}</p>
+                    <a href="${productInfo.url}" class="btn btn-success" target="_blank">View Product</a>
+                </div>
+            </div>
+        </div>`;
+}
 
     // Image Analysis Form Submit
     $('#image-analysis-form').submit(function(e) {
