@@ -1,4 +1,3 @@
-
 export default function ProductGrid({ products }) {
   if (!products.length) {
     return (
@@ -19,18 +18,18 @@ export default function ProductGrid({ products }) {
               className="w-full h-48 object-cover"
             />
           )}
-          
+
           <div className="p-4">
             <h4 className="text-xl font-semibold text-green-400 mb-2">
               {product.name}
             </h4>
-            
+
             {product.price && (
               <p className="text-lg font-bold mb-2">
                 ${product.price.toFixed(2)}
               </p>
             )}
-            
+
             <p className="text-gray-300 mb-4">
               {product.description}
             </p>
@@ -44,17 +43,6 @@ export default function ProductGrid({ products }) {
                   </div>
                 ))}
               </div>
-            )}
-
-            {product.url && (
-              <a
-                href={product.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition"
-              >
-                View Product
-              </a>
             )}
           </div>
         </div>
