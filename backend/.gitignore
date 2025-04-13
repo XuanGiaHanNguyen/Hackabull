@@ -1,0 +1,15 @@
+echo "# Dependencies
+/node_modules
+.next
+/backend/node_modules
+/backend/.next
+/frontend/node_modules
+/frontend/.next
+
+# Build files
+build
+dist
+
+# Large files
+*.pack.gz
+*.node" > .gitignore
