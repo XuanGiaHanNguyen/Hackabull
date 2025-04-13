@@ -480,4 +480,4 @@ function formatProductCard(product) {
             return "bad-fill"; // Bad (red)
         }
     }
-});
+);
