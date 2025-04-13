@@ -334,69 +334,173 @@ class EcoRecommendationEngine:
     def generate_eco_alternatives_from_category(self, category):
         """Generate eco-friendly products for a category"""
         try:
-            # Generic eco-friendly alternatives with real URLs to eco-friendly websites
-            eco_store_urls = {
-                "clothing": "https://earthhero.com/collections/apparel/",
-                "electronics": "https://earthhero.com/collections/technology/",
-                "toys": "https://earthhero.com/collections/kids/",
-                "home": "https://packagefreeshop.com/collections/home",
-                "beauty": "https://packagefreeshop.com/collections/beauty",
-                "food": "https://thrivemarket.com/c/pantry",
-                "kitchen": "https://packagefreeshop.com/collections/kitchen",
-                "pet": "https://earthhero.com/collections/pets/",
-                "general": "https://earthhero.com/collections/all-products"
+            # Mainstream shopping sites and eco-friendly websites with priority on mainstream
+            store_urls = {
+                # Mainstream sites first (higher priority)
+                "amazon": {
+                    "clothing": f"https://www.amazon.com/s?k=sustainable+{category.lower()}+clothing",
+                    "electronics": f"https://www.amazon.com/s?k=eco+friendly+{category.lower()}+electronics",
+                    "toys": f"https://www.amazon.com/s?k=eco+friendly+{category.lower()}+toys",
+                    "home": f"https://www.amazon.com/s?k=eco+friendly+{category.lower()}+home",
+                    "beauty": f"https://www.amazon.com/s?k=sustainable+{category.lower()}+beauty",
+                    "food": f"https://www.amazon.com/s?k=organic+{category.lower()}+food",
+                    "general": f"https://www.amazon.com/s?k=eco+friendly+{category.lower()}"
+                },
+                "walmart": {
+                    "clothing": f"https://www.walmart.com/search?q=sustainable+{category.lower()}+clothing",
+                    "electronics": f"https://www.walmart.com/search?q=eco+friendly+{category.lower()}+electronics",
+                    "toys": f"https://www.walmart.com/search?q=eco+friendly+{category.lower()}+toys",
+                    "home": f"https://www.walmart.com/search?q=eco+friendly+{category.lower()}+home",
+                    "beauty": f"https://www.walmart.com/search?q=sustainable+{category.lower()}+beauty",
+                    "food": f"https://www.walmart.com/search?q=organic+{category.lower()}+food",
+                    "general": f"https://www.walmart.com/search?q=eco+friendly+{category.lower()}"
+                },
+                "target": {
+                    "clothing": f"https://www.target.com/s?searchTerm=sustainable+{category.lower()}+clothing",
+                    "electronics": f"https://www.target.com/s?searchTerm=eco+friendly+{category.lower()}+electronics",
+                    "toys": f"https://www.target.com/s?searchTerm=eco+friendly+{category.lower()}+toys",
+                    "home": f"https://www.target.com/s?searchTerm=eco+friendly+{category.lower()}+home",
+                    "beauty": f"https://www.target.com/s?searchTerm=sustainable+{category.lower()}+beauty",
+                    "food": f"https://www.target.com/s?searchTerm=organic+{category.lower()}+food",
+                    "general": f"https://www.target.com/s?searchTerm=eco+friendly+{category.lower()}"
+                },
+                "bestbuy": {
+                    "electronics": f"https://www.bestbuy.com/site/searchpage.jsp?st=energy+efficient+{category.lower()}",
+                    "general": f"https://www.bestbuy.com/site/searchpage.jsp?st=eco+friendly+{category.lower()}"
+                },
+                "ebay": {
+                    "clothing": f"https://www.ebay.com/sch/i.html?_nkw=sustainable+{category.lower()}+clothing",
+                    "electronics": f"https://www.ebay.com/sch/i.html?_nkw=eco+friendly+{category.lower()}+electronics",
+                    "toys": f"https://www.ebay.com/sch/i.html?_nkw=eco+friendly+{category.lower()}+toys",
+                    "home": f"https://www.ebay.com/sch/i.html?_nkw=eco+friendly+{category.lower()}+home",
+                    "beauty": f"https://www.ebay.com/sch/i.html?_nkw=sustainable+{category.lower()}+beauty",
+                    "general": f"https://www.ebay.com/sch/i.html?_nkw=eco+friendly+{category.lower()}"
+                },
+                # Eco-friendly sites as backup
+                "etsy": {
+                    "clothing": f"https://www.etsy.com/search?q=sustainable+{category.lower()}+clothing",
+                    "home": f"https://www.etsy.com/search?q=eco+friendly+{category.lower()}+home",
+                    "beauty": f"https://www.etsy.com/search?q=sustainable+{category.lower()}+beauty",
+                    "general": f"https://www.etsy.com/search?q=sustainable+{category.lower()}"
+                },
+                "earthhero": {
+                    "clothing": "https://earthhero.com/collections/apparel/",
+                    "electronics": "https://earthhero.com/collections/technology/",
+                    "toys": "https://earthhero.com/collections/kids/",
+                    "general": "https://earthhero.com/collections/all-products"
+                }
             }
             
-            # Get a real URL for this category or fallback to general eco store
-            store_url = eco_store_urls.get(category.lower(), eco_store_urls["general"])
+            # Get appropriate URLs based on category, prioritizing mainstream shopping sites
+            category_key = category.lower()
+            if category_key not in ["clothing", "electronics", "toys", "home", "beauty", "food"]:
+                category_key = "general"
+                
+            # Define mainstream store names for better descriptions
+            store_names = {
+                "amazon": "Amazon",
+                "walmart": "Walmart",
+                "target": "Target",
+                "bestbuy": "Best Buy",
+                "ebay": "eBay",
+                "etsy": "Etsy",
+                "earthhero": "EarthHero"
+            }
             
-            fallback_alternatives = [
-                {
+            # Create alternatives from prioritized stores
+            fallback_alternatives = []
+            
+            # First prioritize Amazon, Walmart, Target
+            for store in ["amazon", "walmart", "target", "bestbuy", "ebay", "etsy"]:
+                if category_key in store_urls[store]:
+                    store_url = store_urls[store][category_key]
+                    
+                    # Create description based on store
+                    if store in ["amazon", "walmart", "target", "bestbuy", "ebay"]:
+                        description = f"Find eco-friendly and sustainable {category} options available at {store_names[store]}. Many products feature recycled materials and sustainable manufacturing."
+                    else:
+                        description = f"Handmade eco-friendly {category} options from small sustainable businesses on {store_names[store]}."
+                    
+                    # Create improvement reasons based on store and category
+                    reasons = []
+                    if store in ["amazon", "walmart", "target"]:
+                        reasons = [
+                            "Offers eco-friendly product filtering options",
+                            "Many products have sustainability certifications", 
+                            "Multiple brands with eco-conscious manufacturing"
+                        ]
+                    elif store == "etsy":
+                        reasons = [
+                            "Supports small eco-conscious businesses",
+                            "Handmade with care", 
+                            "Unique sustainable designs"
+                        ]
+                    else:
+                        reasons = [
+                            "Includes products with recycled materials",
+                            "Offers eco-friendly alternatives", 
+                            "Energy-efficient options available"
+                        ]
+                    
+                    # Add to alternatives
+                    fallback_alternatives.append({
+                        'product': {
+                            'name': f"Eco-Friendly {category.title()} on {store_names[store]}",
+                            'price': 24.99 + (len(fallback_alternatives) * 5),  # Just to make prices different
+                            'description': description,
+                            'category': category,
+                            'url': store_url
+                        },
+                        'improvement': 4,
+                        'improvement_reasons': reasons
+                    })
+                    
+                    # Only include 3 alternatives
+                    if len(fallback_alternatives) >= 3:
+                        break
+            
+            # If we don't have enough alternatives, add from eco-stores
+            if len(fallback_alternatives) < 3:
+                # Add EarthHero as a fallback
+                if category_key in store_urls["earthhero"]:
+                    store_url = store_urls["earthhero"][category_key]
+                    fallback_alternatives.append({
+                        'product': {
+                            'name': f"Eco-Friendly {category.title()} Collection on EarthHero",
+                            'price': 29.99,
+                            'description': f"Curated sustainable {category} products made with recycled materials and eco-friendly manufacturing from EarthHero.",
+                            'category': category,
+                            'url': store_url
+                        },
+                        'improvement': 5,
+                        'improvement_reasons': [
+                            "Made with recycled materials",
+                            "Eco-friendly manufacturing process", 
+                            "Carbon-neutral shipping"
+                        ]
+                    })
+            
+            # Ensure we have exactly 3 alternatives
+            while len(fallback_alternatives) < 3:
+                # Add a generic Amazon alternative if we need more
+                fallback_alternatives.append({
                     'product': {
-                        'name': f"Eco-Friendly {category.title()} Collection",
-                        'price': 24.99,
-                        'description': f"Sustainable {category} made with recycled materials and eco-friendly manufacturing from EarthHero.",
-                        'category': category,
-                        'url': store_url
-                    },
-                    'improvement': 4,
-                    'improvement_reasons': [
-                        "Made with recycled materials",
-                        "Eco-friendly manufacturing process", 
-                        "Carbon-neutral shipping"
-                    ]
-                },
-                {
-                    'product': {
-                        'name': f"Sustainable {category.title()} at Package Free Shop",
-                        'price': 29.99,
-                        'description': f"Premium sustainable {category} with zero-waste packaging and organic materials from Package Free Shop.",
-                        'category': category,
-                        'url': "https://packagefreeshop.com"
-                    },
-                    'improvement': 5,
-                    'improvement_reasons': [
-                        "Made with organic materials",
-                        "Zero-waste company mission", 
-                        "Plastic-free packaging"
-                    ]
-                },
-                {
-                    'product': {
-                        'name': f"Eco-Friendly {category.title()} at Etsy",
+                        'name': f"Sustainable {category.title()} Options",
                         'price': 19.99,
-                        'description': f"Handmade eco-friendly {category} options from small sustainable businesses on Etsy.",
+                        'description': f"Explore eco-friendly alternatives for {category} with improved sustainability features from major retailers.",
                         'category': category,
-                        'url': f"https://www.etsy.com/search?q=sustainable+{category.lower()}"
+                        'url': f"https://www.amazon.com/s?k=sustainable+{category.lower()}"
                     },
                     'improvement': 3,
                     'improvement_reasons': [
-                        "Supports small eco-conscious businesses",
-                        "Handmade with care", 
-                        "Unique sustainable designs"
+                        "Lower environmental impact options",
+                        "Energy-efficient alternatives", 
+                        "Products with recycled content"
                     ]
-                }
-            ]
+                })
+            
+            # Limit to 3 alternatives
+            fallback_alternatives = fallback_alternatives[:3]
             
             return fallback_alternatives
             

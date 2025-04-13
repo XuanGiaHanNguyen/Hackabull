@@ -140,15 +140,17 @@ class SustainabilityAnalyzer:
             logger.error(f"Error analyzing product description: {e}")
             return {"error": f"Error analyzing product: {str(e)}"}
     
-    def analyze_product_image(self, image_data):
+    def analyze_product_image(self, image_data, detect_multiple=False):
         """
-        Analyze a product image for sustainability
+        Analyze a product image for sustainability, with optional multiple product detection
         
         Args:
             image_data (bytes): The image data to analyze
+            detect_multiple (bool): If True, detect and analyze multiple products in the image
             
         Returns:
             dict: A dictionary containing the image analysis and sustainability metrics
+                 If detect_multiple is True, returns a list of product analyses
         """
         try:
             logger.debug("Analyzing product image...")
@@ -179,37 +181,80 @@ class SustainabilityAnalyzer:
                 logger.error(f"Error processing image: {e}")
                 return {"error": f"Error processing image: {str(e)}"}
             
-            # Create prompt for the AI model
-            prompt = """
-            Analyze this product image and provide:
-            
-            1. What the product appears to be
-            2. A detailed description of what you observe
-            3. Any visible materials, packaging, or labeling
-            4. Any sustainability or eco-friendly claims visible
-            
-            Then analyze the product's likely sustainability impact based on what's visible.
-            
-            Return the results as a STRUCTURED JSON with the following fields:
-            
-            1. image_analysis: {
-               product_name: what the product appears to be,
-               description: detailed description of the product,
-               visible_materials: list of materials you can identify,
-               visible_claims: any eco-friendly or sustainability claims visible
-            }
-            
-            2. sustainability_analysis: {
-               materials_sustainability (float, 1-10): Estimated score for sustainability of visible materials,
-               packaging_sustainability (float, 1-10): Score for visible packaging sustainability,
-               greenwashing_risk (string): "Low", "Medium", or "High" risk of greenwashing based on visible claims,
-               improvement_suggestions: array of realistic sustainability improvements,
-               overall_sustainability_score (float, 1-10): Overall sustainability estimate,
-               sustainability_justification: Brief justification for the assessment
-            }
-            
-            Format your response as a well-structured JSON object WITHOUT ANY ADDITIONAL TEXT.
-            """
+            # Choose prompt based on whether we're detecting multiple products or not
+            if detect_multiple:
+                prompt = """
+                Analyze this image for multiple products and perform a sustainability analysis:
+                
+                First, identify all distinct products visible in the image. For each identified product, provide:
+                
+                1. What the product appears to be (name)
+                2. A detailed description of what you observe
+                3. Any visible materials, packaging, or labeling
+                4. Any sustainability or eco-friendly claims visible
+                
+                Then analyze each product's likely sustainability impact based on what's visible.
+                
+                Return the results as a STRUCTURED JSON with the following format:
+                
+                {
+                    "multiple_products": true,
+                    "product_count": number of distinct products identified,
+                    "products": [
+                        {
+                            "image_analysis": {
+                                "product_name": what this product appears to be,
+                                "description": detailed description of this product,
+                                "visible_materials": list of materials you can identify for this product,
+                                "visible_claims": any eco-friendly or sustainability claims visible for this product
+                            },
+                            "sustainability_analysis": {
+                                "materials_sustainability": estimated score (1-10) for sustainability of visible materials,
+                                "packaging_sustainability": score (1-10) for visible packaging sustainability,
+                                "greenwashing_risk": "Low", "Medium", or "High" risk of greenwashing based on visible claims,
+                                "improvement_suggestions": array of realistic sustainability improvements,
+                                "overall_sustainability_score": overall sustainability estimate (1-10),
+                                "sustainability_justification": brief justification for the assessment
+                            }
+                        },
+                        ... (repeat for each identified product)
+                    ]
+                }
+                
+                If only one product is clearly visible, still use the same format but with product_count: 1.
+                Format your response as a well-structured JSON object WITHOUT ANY ADDITIONAL TEXT.
+                """
+            else:
+                prompt = """
+                Analyze this product image and provide:
+                
+                1. What the product appears to be
+                2. A detailed description of what you observe
+                3. Any visible materials, packaging, or labeling
+                4. Any sustainability or eco-friendly claims visible
+                
+                Then analyze the product's likely sustainability impact based on what's visible.
+                
+                Return the results as a STRUCTURED JSON with the following fields:
+                
+                1. image_analysis: {
+                   product_name: what the product appears to be,
+                   description: detailed description of the product,
+                   visible_materials: list of materials you can identify,
+                   visible_claims: any eco-friendly or sustainability claims visible
+                }
+                
+                2. sustainability_analysis: {
+                   materials_sustainability (float, 1-10): Estimated score for sustainability of visible materials,
+                   packaging_sustainability (float, 1-10): Score for visible packaging sustainability,
+                   greenwashing_risk (string): "Low", "Medium", or "High" risk of greenwashing based on visible claims,
+                   improvement_suggestions: array of realistic sustainability improvements,
+                   overall_sustainability_score (float, 1-10): Overall sustainability estimate,
+                   sustainability_justification: Brief justification for the assessment
+                }
+                
+                Format your response as a well-structured JSON object WITHOUT ANY ADDITIONAL TEXT.
+                """
             
             # Generate content using the AI model
             try:
@@ -336,34 +381,82 @@ class SustainabilityAnalyzer:
             return f'<div class="alert alert-danger">{analysis["error"]}</div>'
         
         try:
-            html = '<div class="analysis-container">'
-            
-            # Product identification from image
-            if "image_analysis" in analysis:
-                image_data = analysis["image_analysis"]
+            # Check if this is a multiple product analysis
+            if "multiple_products" in analysis and analysis["multiple_products"]:
+                # Handle multiple products format
+                product_count = analysis.get("product_count", 0)
+                html = f'''
+                <div class="multi-product-container">
+                    <div class="multi-product-header">
+                        <h4><i class="fas fa-layer-group me-2"></i>Multiple Products Detected ({product_count})</h4>
+                        <p>We've identified multiple products in your image. Select a tab to view each product's analysis.</p>
+                    </div>
+                    
+                    <ul class="nav nav-tabs mb-3" id="productTabs" role="tablist">
+                '''
                 
-                # Product name and description
-                if "product_name" in image_data:
+                # Create tab headers for each product
+                products = analysis.get("products", [])
+                for i, product in enumerate(products):
+                    product_name = product.get("image_analysis", {}).get("product_name", f"Product {i+1}")
+                    active_class = "active" if i == 0 else ""
                     html += f'''
-                    <div class="metric-container">
-                        <h4 class="product-title">{image_data.get("product_name", "Unknown Product")}</h4>
-                        <div class="product-description mb-3">{image_data.get("description", "")}</div>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {active_class}" id="product-tab-{i}" data-bs-toggle="tab" 
+                                data-bs-target="#product-content-{i}" type="button" role="tab" aria-selected="{str(i == 0).lower()}">
+                            {product_name}
+                        </button>
+                    </li>
+                    '''
+                
+                html += '</ul><div class="tab-content" id="productTabsContent">'
+                
+                # Create content for each product tab
+                for i, product in enumerate(products):
+                    active_class = "show active" if i == 0 else ""
+                    
+                    # Format each product's analysis using the single product formatter
+                    single_product_html = self._format_single_product(product)
+                    
+                    html += f'''
+                    <div class="tab-pane fade {active_class}" id="product-content-{i}" role="tabpanel" aria-labelledby="product-tab-{i}">
+                        {single_product_html}
                     </div>
                     '''
                 
-                # Materials identified
-                if "visible_materials" in image_data and image_data["visible_materials"]:
-                    html += '<div class="metric-container"><h5>Materials Identified</h5><div class="tags-container">'
-                    for material in image_data["visible_materials"]:
-                        html += f'<span class="sustainability-tag">{material}</span>'
-                    html += '</div></div>'
+                html += '</div></div>'  # Close the tabs and container
                 
-                # Sustainability claims
-                if "visible_claims" in image_data and image_data["visible_claims"]:
-                    html += '<div class="metric-container"><h5>Sustainability Claims</h5><div class="tags-container">'
-                    for claim in image_data["visible_claims"]:
-                        html += f'<span class="sustainability-tag">{claim}</span>'
-                    html += '</div></div>'
+                return html
+            else:
+                # Single product format - use the existing logic
+                html = '<div class="analysis-container">'
+                
+                # Product identification from image
+                if "image_analysis" in analysis:
+                    image_data = analysis["image_analysis"]
+                    
+                    # Product name and description
+                    if "product_name" in image_data:
+                        html += f'''
+                        <div class="metric-container">
+                            <h4 class="product-title">{image_data.get("product_name", "Unknown Product")}</h4>
+                            <div class="product-description mb-3">{image_data.get("description", "")}</div>
+                        </div>
+                        '''
+                    
+                    # Materials identified
+                    if "visible_materials" in image_data and image_data["visible_materials"]:
+                        html += '<div class="metric-container"><h5>Materials Identified</h5><div class="tags-container">'
+                        for material in image_data["visible_materials"]:
+                            html += f'<span class="sustainability-tag">{material}</span>'
+                        html += '</div></div>'
+                    
+                    # Sustainability claims
+                    if "visible_claims" in image_data and image_data["visible_claims"]:
+                        html += '<div class="metric-container"><h5>Sustainability Claims</h5><div class="tags-container">'
+                        for claim in image_data["visible_claims"]:
+                            html += f'<span class="sustainability-tag">{claim}</span>'
+                        html += '</div></div>'
             
             # Check for sustainability analysis data from image analysis
             if "sustainability_analysis" in analysis:
@@ -592,6 +685,126 @@ class SustainabilityAnalyzer:
             logger.error(f"Error extracting JSON: {e}")
             raise
     
+    def _format_single_product(self, product):
+        """
+        Format a single product analysis into HTML
+        
+        Args:
+            product (dict): The product analysis
+            
+        Returns:
+            str: Formatted HTML for the product
+        """
+        if not product:
+            return '<div class="alert alert-warning">No product data available.</div>'
+            
+        html = '<div class="analysis-container">'
+        
+        # Product identification from image
+        if "image_analysis" in product:
+            image_data = product["image_analysis"]
+            
+            # Product name and description
+            if "product_name" in image_data:
+                html += f'''
+                <div class="metric-container">
+                    <h4 class="product-title">{image_data.get("product_name", "Unknown Product")}</h4>
+                    <div class="product-description mb-3">{image_data.get("description", "")}</div>
+                </div>
+                '''
+            
+            # Materials identified
+            if "visible_materials" in image_data and image_data["visible_materials"]:
+                html += '<div class="metric-container"><h5>Materials Identified</h5><div class="tags-container">'
+                for material in image_data["visible_materials"]:
+                    html += f'<span class="sustainability-tag">{material}</span>'
+                html += '</div></div>'
+            
+            # Sustainability claims
+            if "visible_claims" in image_data and image_data["visible_claims"]:
+                html += '<div class="metric-container"><h5>Sustainability Claims</h5><div class="tags-container">'
+                for claim in image_data["visible_claims"]:
+                    html += f'<span class="sustainability-tag">{claim}</span>'
+                html += '</div></div>'
+        
+        # Check for sustainability analysis data
+        if "sustainability_analysis" in product:
+            sustainability_data = product["sustainability_analysis"]
+            
+            # Materials sustainability
+            if "materials_sustainability" in sustainability_data:
+                score = self._parse_score(sustainability_data["materials_sustainability"])
+                score_class = self._get_score_class(score)
+                
+                html += f'''
+                <div class="metric-container">
+                    <div class="metric-name">
+                        Materials Sustainability
+                        <span class="metric-score">{score}/10</span>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-fill {score_class}" style="--target-width: {score * 10}%"></div>
+                    </div>
+                </div>
+                '''
+            
+            # Overall sustainability score
+            if "overall_sustainability_score" in sustainability_data:
+                score = self._parse_score(sustainability_data["overall_sustainability_score"])
+                score_class = self._get_score_class(score)
+                
+                html += f'''
+                <div class="metric-container">
+                    <div class="metric-name">
+                        Overall Sustainability Score
+                        <span class="metric-score">{score}/10</span>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-fill {score_class}" style="--target-width: {score * 10}%"></div>
+                    </div>
+                </div>
+                '''
+            
+            # Improvement suggestions
+            if "improvement_suggestions" in sustainability_data and sustainability_data["improvement_suggestions"]:
+                html += '<div class="metric-container"><h5>Improvement Opportunities</h5><ul class="list-group">'
+                
+                for suggestion in sustainability_data["improvement_suggestions"]:
+                    html += f'<li class="list-group-item">{suggestion}</li>'
+                
+                html += '</ul></div>'
+            
+            # Sustainability justification
+            if "sustainability_justification" in sustainability_data:
+                html += f'''
+                <div class="metric-container">
+                    <h5>Assessment Explanation</h5>
+                    <div class="metric-justification">{sustainability_data["sustainability_justification"]}</div>
+                </div>
+                '''
+            
+            # Greenwashing risk
+            if "greenwashing_risk" in sustainability_data:
+                risk = sustainability_data["greenwashing_risk"]
+                risk_class = ""
+                
+                if risk.lower() == "high":
+                    risk_class = "text-danger fw-bold"
+                elif risk.lower() == "medium":
+                    risk_class = "text-warning fw-bold"
+                elif risk.lower() == "low":
+                    risk_class = "text-success fw-bold"
+                
+                html += f'''
+                <div class="metric-container">
+                    <h5>Greenwashing Risk</h5>
+                    <p class="{risk_class}">{risk}</p>
+                </div>
+                '''
+        
+        html += '</div>'
+        return html
+        
     def _parse_score(self, score):
         """
         Parse a score value to ensure it's a float between 0 and 10
