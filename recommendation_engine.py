@@ -815,28 +815,33 @@ class EcoRecommendationEngine:
 
             # Create the formatted HTML with enhanced styling
             html = f"""
-            <div class="product-card">
-                <span class="eco-badge">Eco-Friendly</span>
-                {f'<img src="{image_url}" class="product-image" alt="{name}">' if image_url else ''}
-                <div class="product-name">{name}</div>
-                <div class="rating-stars">
-                    {'★' * round(eco_score/2)}{'☆' * (5 - round(eco_score/2))}
+                <div class="product-card">
+                    <span class="eco-badge">Eco-Friendly</span>
+                    {f'<img src="{image_url}" class="product-image" alt="{name}">' if image_url else ''}
+                    <div class="product-name">{name}</div>
+                    <div class="rating-stars">
+                        {'★' * round(eco_score/2)}{'☆' * (5 - round(eco_score/2))}
+                    </div>
+                    <div class="product-price">${price:.2f}</div>
+                    <div class="product-description">{description}</div>
+
+                    {badges_html}
+
+                    {stats_html}
+
+                    <div class="improvements-container">
+                        <h6><i class="fas fa-leaf mr-2"></i>Sustainability Improvements</h6>
+                        {reasons_html}
+                    </div>
+
+                    <a href="{url}" class="product-link" target="_blank">
+                        <img src="/static/img/{store.lower()}.png" class="store-icon" alt="{store}"/>
+                        View on {store}
+                    </a>
                 </div>
-                <div class="product-price">${price:.2f}</div>
-                <div class="product-description">{description}</div>
+                """
+                return html
 
-                {badges_html}
-
-                {stats_html}
-
-                <div class="improvements-container">
-                    <h6><i class="fas fa-leaf mr-2"></i>Sustainability Improvements</h6>
-                    {reasons_html}
-                </div>
-
-                <a href="{url}" class="product-link" target="_blank">
-                    <img src="/static/img/{store.lower()}.png" class="store-icon" alt="{store}"/>
-                    View on {store}
-                </a>
-            </div>
-            """
+            except Exception as e:
+                logger.error(f"Error formatting alternative: {str(e)}")
+                return f"<div class=\"alert alert-danger\">Error formatting product: {str(e)}</div>"
