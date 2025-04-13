@@ -338,6 +338,108 @@ class SustainabilityAnalyzer:
         try:
             html = '<div class="analysis-container">'
             
+            # Product identification from image
+            if "image_analysis" in analysis:
+                image_data = analysis["image_analysis"]
+                
+                # Product name and description
+                if "product_name" in image_data:
+                    html += f'''
+                    <div class="metric-container">
+                        <h4 class="product-title">{image_data.get("product_name", "Unknown Product")}</h4>
+                        <div class="product-description mb-3">{image_data.get("description", "")}</div>
+                    </div>
+                    '''
+                
+                # Materials identified
+                if "visible_materials" in image_data and image_data["visible_materials"]:
+                    html += '<div class="metric-container"><h5>Materials Identified</h5><div class="tags-container">'
+                    for material in image_data["visible_materials"]:
+                        html += f'<span class="sustainability-tag">{material}</span>'
+                    html += '</div></div>'
+                
+                # Sustainability claims
+                if "visible_claims" in image_data and image_data["visible_claims"]:
+                    html += '<div class="metric-container"><h5>Sustainability Claims</h5><div class="tags-container">'
+                    for claim in image_data["visible_claims"]:
+                        html += f'<span class="sustainability-tag">{claim}</span>'
+                    html += '</div></div>'
+            
+            # Check for sustainability analysis data from image analysis
+            if "sustainability_analysis" in analysis:
+                sustainability_data = analysis["sustainability_analysis"]
+                
+                # Materials sustainability from image analysis
+                if "materials_sustainability" in sustainability_data:
+                    score = self._parse_score(sustainability_data["materials_sustainability"])
+                    score_class = self._get_score_class(score)
+                    
+                    html += f'''
+                    <div class="metric-container">
+                        <div class="metric-name">
+                            Materials Sustainability
+                            <span class="metric-score">{score}/10</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill {score_class}" style="--target-width: {score * 10}%"></div>
+                        </div>
+                    </div>
+                    '''
+                
+                # Overall sustainability score from image analysis
+                if "overall_sustainability_score" in sustainability_data:
+                    score = self._parse_score(sustainability_data["overall_sustainability_score"])
+                    score_class = self._get_score_class(score)
+                    
+                    html += f'''
+                    <div class="metric-container">
+                        <div class="metric-name">
+                            Overall Sustainability Score
+                            <span class="metric-score">{score}/10</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill {score_class}" style="--target-width: {score * 10}%"></div>
+                        </div>
+                    </div>
+                    '''
+                
+                # Improvement suggestions from image analysis
+                if "improvement_suggestions" in sustainability_data and sustainability_data["improvement_suggestions"]:
+                    html += '<div class="metric-container"><h5>Improvement Opportunities</h5><ul class="list-group">'
+                    
+                    for suggestion in sustainability_data["improvement_suggestions"]:
+                        html += f'<li class="list-group-item">{suggestion}</li>'
+                    
+                    html += '</ul></div>'
+                
+                # Sustainability justification from image analysis
+                if "sustainability_justification" in sustainability_data:
+                    html += f'''
+                    <div class="metric-container">
+                        <h5>Assessment Explanation</h5>
+                        <div class="metric-justification">{sustainability_data["sustainability_justification"]}</div>
+                    </div>
+                    '''
+                
+                # Greenwashing risk
+                if "greenwashing_risk" in sustainability_data:
+                    risk = sustainability_data["greenwashing_risk"]
+                    risk_class = ""
+                    
+                    if risk.lower() == "high":
+                        risk_class = "text-danger fw-bold"
+                    elif risk.lower() == "medium":
+                        risk_class = "text-warning fw-bold"
+                    elif risk.lower() == "low":
+                        risk_class = "text-success fw-bold"
+                    
+                    html += f'''
+                    <div class="metric-container">
+                        <h5>Greenwashing Risk</h5>
+                        <p class="{risk_class}">{risk}</p>
+                    </div>
+                    '''
+            
             # Overall sustainability score
             if "overall_sustainability_score" in analysis:
                 score = self._parse_score(analysis["overall_sustainability_score"])

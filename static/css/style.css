@@ -375,3 +375,23 @@ body {
     gap: 8px;
     margin-top: 10px;
 }
+
+/* Product title in image analysis */
+.product-title {
+    color: #20c997;
+    margin-bottom: 15px;
+    border-bottom: 2px solid rgba(32, 201, 151, 0.3);
+    padding-bottom: 10px;
+    font-weight: 600;
+}
+
+/* Specific styling for image analysis results */
+#image-analysis-content .sustainability-tag {
+    background-color: rgba(32, 201, 151, 0.2);
+    color: #20c997;
+    font-weight: 500;
+}
+
+#image-analysis-content .metric-container {
+    border-left: 3px solid #20c997;
+}
