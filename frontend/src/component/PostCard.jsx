@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const PostCard = ({ post }) => {
+  useEffect(() => {
+    console.log('Image URL:', `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${post.productImage}`);
+  }, [post]);
   return (
     <div className="bg-white rounded-lg border-1 shadow-md overflow-hidden border-gray-300 hover:scale-105 transition-transform">
       <div className="relative h-48">

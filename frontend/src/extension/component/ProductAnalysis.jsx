@@ -240,7 +240,7 @@ const ProductAnalysis = ({ analysisData, onBackToMain, onScanAgain, loading }) =
                         onClick={onViewSecondHandMarket}
                         className="w-full mt-3 py-2 px-4 rounded font-medium bg-white border border-green-800 text-green-800 hover:bg-gray-200 transition-transform transform hover:scale-105"
                     >
-                        View this product on our second-hand market
+                        View Second-hand market
                     </button>
                 </div>
 

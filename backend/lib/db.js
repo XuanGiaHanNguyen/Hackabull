@@ -1,8 +1,14 @@
 import mongoose from 'mongoose';
 
-const MONGO_URI = process.env.MONGO_URI;
+// Check for both possible environment variable names
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 
-if (!MONGO_URI) throw new Error('Please define the MONGO_URI environment variable');
+if (!MONGO_URI) {
+  throw new Error('Please define the MONGO_URI or MONGODB_URI environment variable');
+}
+
+// Log the first part of the URI to verify it's working (without exposing credentials)
+console.log('MongoDB URI detected:', MONGO_URI.substring(0, MONGO_URI.indexOf('@') > 0 ? MONGO_URI.indexOf('@') : 15) + '...');
 
 let cached = global.mongoose;
 
@@ -11,14 +17,38 @@ if (!cached) {
 }
 
 export async function connectToDB() {
-  if (cached.conn) return cached.conn;
+  if (cached.conn) {
+    console.log('Using existing MongoDB connection');
+    return cached.conn;
+  }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGO_URI, {
+    const options = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    }).then(mongoose => mongoose);
+    };
+
+    console.log('Creating new MongoDB connection');
+    
+    cached.promise = mongoose.connect(MONGO_URI, options)
+      .then(mongoose => {
+        console.log('Successfully connected to MongoDB');
+        return mongoose;
+      })
+      .catch(err => {
+        console.error('MongoDB connection error:', err);
+        cached.promise = null; // Reset so we can try again
+        throw err;
+      });
+  } else {
+    console.log('Reusing existing MongoDB connection promise');
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
+
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    console.error('Error resolving MongoDB connection:', error);
+    throw error;
+  }
 }

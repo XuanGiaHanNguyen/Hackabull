@@ -355,7 +355,7 @@ const Marketplace = () => {
                     <>
                       {/* Display user email or name if available */}
                       {user && (
-                        <span className="text-neutral-300 mr-2 mt-1 font-semibold hover:underline" onClick={() => navigate("/search")}>
+                        <span className="text-neutral-300 mr-2 mt-1 font-semibold hover:underline" onClick={() => navigate("/product")}>
                           Price Comparision
                         </span>
                       )}
