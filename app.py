@@ -161,12 +161,14 @@ def upload_image():
     try:
         # Check if the post request has the image file
         if 'image' not in request.files:
+            logger.error("No image file in request")
             return jsonify({"error": "No image file provided"}), 400
             
         file = request.files['image']
         
         # If the user does not select a file, the browser submits an empty file
         if file.filename == '':
+            logger.error("Empty filename in request")
             return jsonify({"error": "No image selected"}), 400
             
         if file:
@@ -182,18 +184,47 @@ def upload_image():
                 image_data = img_file.read()
             
             # Use the analyzer to process the image
+            logger.debug(f"Starting image analysis for {filename}")
             analysis = analyzer.analyze_product_image(image_data)
+            logger.debug(f"Analysis completed: {str(analysis)[:500]}...")
+            
+            if not analysis or "error" in analysis:
+                logger.error(f"Analysis returned error or empty result: {analysis.get('error') if analysis else 'None'}")
+                return jsonify({
+                    "error": "Unable to analyze image",
+                    "details": analysis.get("error") if analysis else "No analysis returned",
+                    "analysis": analysis
+                })
             
             # Format the analysis for display
             formatted_analysis = analyzer.format_analysis_for_display(analysis)
+            logger.debug(f"Formatted analysis generated, length: {len(formatted_analysis)}")
+            
+            # Find eco-friendly alternatives based on detected product
+            product_name = ""
+            product_description = ""
+            if "image_analysis" in analysis and "product_name" in analysis["image_analysis"]:
+                product_name = analysis["image_analysis"]["product_name"]
+                product_description = analysis["image_analysis"].get("description", "")
+            
+            logger.debug(f"Looking for alternatives for: {product_name}")
+            alternatives = []
+            if product_name:
+                alternatives = recommendation_engine.find_alternatives(
+                    f"{product_name}. {product_description}"
+                )
+                logger.debug(f"Found {len(alternatives)} alternatives")
             
             return jsonify({
                 "analysis": analysis,
-                "formatted_analysis": formatted_analysis
+                "formatted_analysis": formatted_analysis,
+                "alternatives": alternatives
             })
     
     except Exception as e:
         logger.error(f"Error processing image: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return jsonify({
             "error": "Error processing image", 
             "details": str(e)

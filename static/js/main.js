@@ -1,121 +1,6 @@
 $(document).ready(function() {
     // Load categories on page load
     loadCategories();
-
-    // Product Analysis Form Submit
-    $('#analyze-form').submit(function(e) {
-        e.preventDefault();
-        const description = $('#product-description').val();
-        const category = $('#product-category').val();
-
-        // Show loading spinner
-        $('#analysis-content').html('<div class="spinner-container"><div class="spinner"></div><p>Analyzing product...</p></div>');
-        $('#analysis-results').show();
-        
-        // Hide other result containers
-        $('#greenwashing-results').hide();
-        $('#alternatives-results').hide();
-        
-        // Analyze the product
-        $.ajax({
-            url: '/analyze',
-            method: 'POST',
-            data: {
-                description: description,
-                category: category
-            },
-            success: function(response) {
-                // Display formatted analysis
-                if (response.analysis && response.analysis.error) {
-                    $('#analysis-content').html(`<div class="alert alert-danger">${response.analysis.error}</div>`);
-                } else {
-                    $('#analysis-content').html(formatAnalysisObject(response.analysis));
-                }
-                
-                // Scroll to results
-                $('html, body').animate({
-                    scrollTop: $('#analysis-results').offset().top - 70
-                }, 500);
-            },
-            error: function() {
-                $('#analysis-content').html('<div class="alert alert-danger">Error analyzing product. Please try again.</div>');
-            }
-        });
-    });
-    
-    // Find Alternatives Button Click
-    $('#find-alternatives-btn').click(function() {
-        const description = $('#product-description').val();
-        const category = $('#product-category').val();
-        
-        if (!description) {
-            alert('Please enter a product description first.');
-            return;
-        }
-        
-        // Show loading spinner
-        $('#alternatives-content').html('<div class="spinner-container"><div class="spinner"></div><p>Finding eco-friendly alternatives...</p></div>');
-        $('#alternatives-results').show();
-        
-        // Find alternatives
-        $.ajax({
-            url: '/alternatives',
-            method: 'POST',
-            data: {
-                description: description,
-                category: category
-            },
-            success: function(response) {
-                if (response.alternatives && response.alternatives.length > 0) {
-                    displayAlternatives(response.alternatives);
-                } else {
-                    $('#alternatives-content').html('<div class="alert alert-warning">No specific alternatives found. Please try a different product description or category.</div>');
-                }
-                
-                // Scroll to results
-                $('html, body').animate({
-                    scrollTop: $('#alternatives-results').offset().top - 70
-                }, 500);
-            },
-            error: function() {
-                $('#alternatives-content').html('<div class="alert alert-danger">Error finding alternatives. Please try again.</div>');
-            }
-        });
-    });
-    
-    // Check Greenwashing Button Click
-    $('#check-greenwashing-btn').click(function() {
-        const description = $('#product-description').val();
-        
-        if (!description) {
-            alert('Please enter a product description first.');
-            return;
-        }
-        
-        // Show loading spinner
-        $('#greenwashing-content').html('<div class="spinner-container"><div class="spinner"></div><p>Analyzing for greenwashing...</p></div>');
-        $('#greenwashing-results').show();
-        
-        // Check for greenwashing
-        $.ajax({
-            url: '/greenwashing',
-            method: 'POST',
-            data: {
-                description: description
-            },
-            success: function(response) {
-                displayGreenwashing(response.greenwashing);
-                
-                // Scroll to results
-                $('html, body').animate({
-                    scrollTop: $('#greenwashing-results').offset().top - 70
-                }, 500);
-            },
-            error: function() {
-                $('#greenwashing-content').html('<div class="alert alert-danger">Error checking greenwashing. Please try again.</div>');
-            }
-        });
-    });
     
     // Image Analysis Form Submit
     $('#image-analysis-form').submit(function(e) {
@@ -135,6 +20,9 @@ $(document).ready(function() {
         $('#image-analysis-content').html('<div class="spinner-container"><div class="spinner"></div><p>Analyzing image...</p></div>');
         $('#image-analysis-results').show();
         
+        // Hide alternatives section initially
+        $('#eco-alternatives-results').hide();
+        
         // Analyze image
         $.ajax({
             url: '/upload_image',
@@ -143,6 +31,8 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function(response) {
+                console.log("Response received:", response);
+                
                 if (response.error) {
                     $('#image-analysis-content').html(`<div class="alert alert-danger">${response.error}</div>`);
                     if (response.details) {
@@ -151,6 +41,13 @@ $(document).ready(function() {
                 } else {
                     // Display formatted analysis
                     $('#image-analysis-content').html(response.formatted_analysis || formatAnalysisObject(response.analysis));
+                    
+                    // Display alternatives if available
+                    if (response.alternatives && response.alternatives.length > 0) {
+                        $('#eco-alternatives-content').html('');
+                        displayAlternatives(response.alternatives, '#eco-alternatives-content');
+                        $('#eco-alternatives-results').show();
+                    }
                 }
                 
                 // Scroll to results
@@ -158,44 +55,19 @@ $(document).ready(function() {
                     scrollTop: $('#image-analysis-results').offset().top - 70
                 }, 500);
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", status, error);
                 $('#image-analysis-content').html('<div class="alert alert-danger">Error analyzing image. Please try again.</div>');
-            }
-        });
-    });
-    
-    // Materials Form Submit
-    $('#materials-form').submit(function(e) {
-        e.preventDefault();
-        
-        const materials = $('#materials-list').val();
-        
-        if (!materials) {
-            alert('Please enter materials or ingredients.');
-            return;
-        }
-        
-        // Show loading spinner
-        $('#materials-content').html('<div class="spinner-container"><div class="spinner"></div><p>Finding sustainable alternatives...</p></div>');
-        $('#materials-results').show();
-        
-        // Find material alternatives
-        $.ajax({
-            url: '/material_alternatives',
-            method: 'POST',
-            data: {
-                materials: materials
-            },
-            success: function(response) {
-                displayMaterialAlternatives(response.alternatives);
-                
-                // Scroll to results
-                $('html, body').animate({
-                    scrollTop: $('#materials-results').offset().top - 70
-                }, 500);
-            },
-            error: function() {
-                $('#materials-content').html('<div class="alert alert-danger">Error finding alternatives. Please try again.</div>');
+                if (xhr.responseText) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.details) {
+                            $('#image-analysis-content').append(`<div class="alert alert-info">Details: ${response.details}</div>`);
+                        }
+                    } catch (e) {
+                        console.error("Error parsing response:", e);
+                    }
+                }
             }
         });
     });
@@ -341,7 +213,7 @@ $(document).ready(function() {
         return html;
     }
     
-    function displayAlternatives(alternatives) {
+    function displayAlternatives(alternatives, targetSelector = '#alternatives-content') {
         let html = '';
         
         alternatives.forEach(function(alternative, index) {
@@ -396,7 +268,7 @@ $(document).ready(function() {
             html += '</div>';
         });
         
-        $('#alternatives-content').html(html);
+        $(targetSelector).html(html);
     }
     
     function displayGreenwashing(greenwashing) {
