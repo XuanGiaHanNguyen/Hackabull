@@ -956,13 +956,39 @@ class SustainabilityAnalyzer:
     
     def _generate_fallback_image_analysis(self):
         """Generate a fallback image analysis when API call fails"""
-        # Generate greenwashing risk based on product claims and certifications
-        # Count various eco-claims and certifications to determine risk level
-        eco_claims = ["eco", "green", "natural", "sustainable", "environmentally friendly"]
-        certification_terms = ["certified", "verified", "certified organic", "fair trade", "fsc"]
+        # Enhanced eco-claims detection
+        eco_claims = [
+            "eco", "green", "natural", "sustainable", "environmentally friendly",
+            "biodegradable", "earth-friendly", "eco-conscious", "clean",
+            "non-toxic", "chemical-free", "pure", "organic"
+        ]
         
-        claim_count = sum(1 for claim in eco_claims if claim in description.lower())
-        cert_count = sum(1 for cert in certification_terms if cert in description.lower())
+        # Specific certification terms
+        certification_terms = [
+            "certified", "verified", "certified organic", "fair trade", "fsc",
+            "gots", "energy star", "cradle to cradle", "ecolabel", "bluesign"
+        ]
+        
+        # Look for specific materials that might indicate greenwashing
+        problematic_materials = ["plastic", "synthetic", "petroleum-based"]
+        
+        # Count various indicators
+        description_lower = description.lower() if 'description' in locals() else ""
+        claim_count = sum(1 for claim in eco_claims if claim in description_lower)
+        cert_count = sum(1 for cert in certification_terms if cert in description_lower)
+        problematic_count = sum(1 for mat in problematic_materials if mat in description_lower)
+        
+        # Determine risk level with stricter criteria
+        if claim_count > 1 and cert_count == 0:
+            greenwashing_risk = "High"
+        elif claim_count > 0 and problematic_count > 0:
+            greenwashing_risk = "Medium"
+        elif claim_count > 0 and cert_count == 0:
+            greenwashing_risk = "Medium"
+        elif claim_count == 0 or cert_count >= claim_count:
+            greenwashing_risk = "Low"
+        else:
+            greenwashing_risk = "Medium"
         
         # Determine risk level based on claims vs certifications
         if claim_count > 2 and cert_count == 0:

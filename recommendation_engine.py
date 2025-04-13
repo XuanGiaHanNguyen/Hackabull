@@ -50,9 +50,12 @@ class EcoRecommendationEngine:
     def _extract_product_type(self, description):
         """Extract the product type from a description"""
         try:
-            # Common product types that might be mentioned in descriptions
+            # First look for exact product matches
+            description_lower = description.lower()
+            
+            # Common product types with their categories
             product_keywords = {
-                "clothing": ["shirt", "tshirt", "t-shirt", "pants", "jeans", "jacket", "hoodie", "sweater", "dress", "skirt", "socks", "underwear", "clothing", "apparel", "shoes", "sneakers", "boots", "footwear"],
+                "clothing": ["shirt", "tshirt", "t-shirt", "pants", "jeans", "jacket", "hoodie", "sweater", "dress", "skirt", "socks", "underwear", "clothing", "apparel", "shoes", "sneakers", "boots", "footwear", "fleece"],
                 "electronics": ["phone", "smartphone", "laptop", "computer", "tablet", "headphones", "earbuds", "speaker", "television", "tv", "appliance", "electronic", "device", "power", "battery", "charger", "cable", "camera"],
                 "food": ["food", "beverage", "drink", "snack", "meal", "grocery", "fruit", "vegetable", "meat", "dairy", "organic", "supplement"],
                 "home": ["furniture", "chair", "table", "desk", "sofa", "couch", "bed", "mattress", "shelf", "lamp", "pillow", "blanket", "kitchenware", "utensil", "plate", "bowl", "cup", "mug", "towel", "rug", "curtain"],
