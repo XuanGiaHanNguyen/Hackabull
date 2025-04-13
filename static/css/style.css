@@ -395,3 +395,33 @@ body {
 #image-analysis-content .metric-container {
     border-left: 3px solid #20c997;
 }
+
+/* Uploaded image styling */
+.uploaded-image-container {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.05);
+    position: relative;
+}
+
+.uploaded-product-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+}
+
+.image-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(32, 201, 151, 0.8);
+    color: white;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    text-align: center;
+    font-weight: 600;
+}

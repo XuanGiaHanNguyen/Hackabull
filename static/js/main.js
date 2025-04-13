@@ -16,8 +16,26 @@ $(document).ready(function() {
         
         formData.append('image', imageFile);
         
+        // Create an image preview
+        const previewUrl = URL.createObjectURL(imageFile);
+        
         // Show loading spinner
-        $('#image-analysis-content').html('<div class="spinner-container"><div class="spinner"></div><p>Analyzing image...</p></div>');
+        $('#image-analysis-content').html(
+            `<div class="row mb-4">
+                <div class="col-md-5">
+                    <div class="uploaded-image-container">
+                        <img src="${previewUrl}" alt="Uploaded product" class="img-fluid uploaded-product-image">
+                        <div class="image-caption">Uploaded Product Image</div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="spinner-container mt-5">
+                        <div class="spinner"></div>
+                        <p>Analyzing product image...</p>
+                    </div>
+                </div>
+            </div>`
+        );
         $('#image-analysis-results').show();
         
         // Hide alternatives section initially
@@ -34,13 +52,30 @@ $(document).ready(function() {
                 console.log("Response received:", response);
                 
                 if (response.error) {
-                    $('#image-analysis-content').html(`<div class="alert alert-danger">${response.error}</div>`);
-                    if (response.details) {
-                        $('#image-analysis-content').append(`<div class="alert alert-info">${response.details}</div>`);
-                    }
+                    // Keep the image but show error
+                    const imageHtml = $('#image-analysis-content').find('.col-md-5').prop('outerHTML');
+                    $('#image-analysis-content').html(
+                        `<div class="row mb-4">
+                            ${imageHtml}
+                            <div class="col-md-7">
+                                <div class="alert alert-danger">${response.error}</div>
+                                ${response.details ? `<div class="alert alert-info">Details: ${response.details}</div>` : ''}
+                            </div>
+                        </div>`
+                    );
                 } else {
-                    // Display formatted analysis
-                    $('#image-analysis-content').html(response.formatted_analysis || formatAnalysisObject(response.analysis));
+                    // Keep the image and show analysis
+                    const imageHtml = $('#image-analysis-content').find('.col-md-5').prop('outerHTML');
+                    const analysisHtml = response.formatted_analysis || formatAnalysisObject(response.analysis);
+                    
+                    $('#image-analysis-content').html(
+                        `<div class="row mb-4">
+                            ${imageHtml}
+                            <div class="col-md-7">
+                                ${analysisHtml}
+                            </div>
+                        </div>`
+                    );
                     
                     // Display alternatives if available
                     if (response.alternatives && response.alternatives.length > 0) {
