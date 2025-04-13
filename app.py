@@ -1,38 +1,98 @@
-from flask import Flask, request, jsonify, send_from_directory
+# app.py
+from flask import Flask, render_template, request, jsonify, redirect, url_for
+from werkzeug.utils import secure_filename
 import os
+import io
+import logging
 from dotenv import load_dotenv
 import google.generativeai as genai
+
+# Import custom modules
 from ai_analysis_service import SustainabilityAnalyzer
 from recommendation_engine import EcoRecommendationEngine
 
-# Initialize Flask app
-app = Flask(__name__, static_folder='dist')
-app.secret_key = os.environ.get("SESSION_SECRET", "supersecretkey")
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-# Load environment variables and configure services
+# Load environment variables
 load_dotenv()
+
+# Configure Google API
 api_key = os.getenv("GOOGLE_API_KEY")
 if not api_key:
-    raise ValueError("GOOGLE_API_KEY is required")
+    logger.error("GOOGLE_API_KEY not found in environment variables")
+    raise ValueError("GOOGLE_API_KEY is required. Please set it in the .env file.")
 genai.configure(api_key=api_key)
 
-# Initialize services
+# Initialize Flask app
+app = Flask(__name__)
+app.secret_key = os.environ.get("SESSION_SECRET", "supersecretkey")
+
+# Configure upload folder for images
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max upload size: 16MB
+
+# Initialize analyzer and recommendation engine
 analyzer = SustainabilityAnalyzer()
 recommendation_engine = EcoRecommendationEngine()
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
+# Preload some sample products
+def preload_sample_products():
+    sample_products = [
+        {
+            "name": "Regular Cotton T-shirt",
+            "category": "clothing",
+            "description": "Cotton t-shirt made in Bangladesh. Machine washable. 100% cotton.",
+            "price": 15.99
+        },
+        {
+            "name": "Organic Cotton T-shirt",
+            "category": "clothing",
+            "description": "Organic cotton t-shirt made with renewable energy in a fair-trade certified facility. "
+            "Made with 100% GOTS certified organic cotton. Low-impact dyes. Carbon-neutral shipping.",
+            "price": 29.99
+        },
+        {
+            "name": "Recycled Polyester Jacket",
+            "category": "clothing",
+            "description": "Jacket made from 80% recycled plastic bottles. Water-resistant coating without PFCs. "
+            "Designed for circularity with easily separable components for recycling at end of life.",
+            "price": 89.99
+        },
+        {
+            "name": "Bamboo Toothbrush",
+            "category": "personal care",
+            "description": "Biodegradable bamboo toothbrush with plant-based bristles. "
+            "Comes in recyclable paper packaging. Carbon-neutral shipping.",
+            "price": 4.99
+        },
+        {
+            "name": "Plastic Bottled Water",
+            "category": "beverages",
+            "description": "Spring water in single-use plastic bottle. Purified and bottled at source.",
+            "price": 1.99
+        },
+        {
+            "name": "Reusable Water Bottle",
+            "category": "beverages",
+            "description": "Stainless steel water bottle, BPA free, double-walled insulation. "
+            "Keeps drinks cold for 24 hours or hot for 12 hours. Durable and recyclable.",
+            "price": 24.99
+        }
+    ]
+    
+    for product in sample_products:
+        recommendation_engine.add_product_to_database(product)
+    
+    logger.info(f"Preloaded {len(sample_products)} sample products")
 
-@app.route('/<path:path>')
-def static_proxy(path):
-    return send_from_directory(app.static_folder, path)
-
-# Keep your existing API routes (analyze, alternatives, etc.)
+# Routes
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/analyze', methods=['POST'])
 def analyze_product():
@@ -54,6 +114,7 @@ def analyze_product():
     except Exception as e:
         logger.error(f"Error analyzing product: {str(e)}")
         return jsonify({"analysis": {"error": f"Error analyzing product: {str(e)}"}}), 500
+
 
 
 @app.route('/alternatives', methods=['POST'])
@@ -207,70 +268,11 @@ def get_material_alternatives():
 @app.route('/test_image_upload')
 def test_image_upload():
     """A simple page for testing image uploads"""
-    return send_from_directory(app.static_folder, 'test_image_upload.html')
-
-
-# Configure upload folder for images (moved here to be consistent with other app config)
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max upload size: 16MB
-
-# Configure logging (moved here for consistency)
-import logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-# Preload sample products (moved here for consistency)
-def preload_sample_products():
-    sample_products = [
-        {
-            "name": "Regular Cotton T-shirt",
-            "category": "clothing",
-            "description": "Cotton t-shirt made in Bangladesh. Machine washable. 100% cotton.",
-            "price": 15.99
-        },
-        {
-            "name": "Organic Cotton T-shirt",
-            "category": "clothing",
-            "description": "Organic cotton t-shirt made with renewable energy in a fair-trade certified facility. "
-            "Made with 100% GOTS certified organic cotton. Low-impact dyes. Carbon-neutral shipping.",
-            "price": 29.99
-        },
-        {
-            "name": "Recycled Polyester Jacket",
-            "category": "clothing",
-            "description": "Jacket made from 80% recycled plastic bottles. Water-resistant coating without PFCs. "
-            "Designed for circularity with easily separable components for recycling at end of life.",
-            "price": 89.99
-        },
-        {
-            "name": "Bamboo Toothbrush",
-            "category": "personal care",
-            "description": "Biodegradable bamboo toothbrush with plant-based bristles. "
-            "Comes in recyclable paper packaging. Carbon-neutral shipping.",
-            "price": 4.99
-        },
-        {
-            "name": "Plastic Bottled Water",
-            "category": "beverages",
-            "description": "Spring water in single-use plastic bottle. Purified and bottled at source.",
-            "price": 1.99
-        },
-        {
-            "name": "Reusable Water Bottle",
-            "category": "beverages",
-            "description": "Stainless steel water bottle, BPA free, double-walled insulation. "
-            "Keeps drinks cold for 24 hours or hot for 12 hours. Durable and recyclable.",
-            "price": 24.99
-        }
-    ]
-    
-    for product in sample_products:
-        recommendation_engine.add_product_to_database(product)
-    
-    logger.info(f"Preloaded {len(sample_products)} sample products")
+    return render_template('test_image_upload.html')
 
 if __name__ == '__main__':
+    # Preload sample products
     preload_sample_products()
+    
+    # Run the Flask app
     app.run(host='0.0.0.0', port=5000, debug=True)
