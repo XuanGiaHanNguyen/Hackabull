@@ -150,28 +150,7 @@ $(document).ready(function() {
                     }
                 } else {
                     // Display formatted analysis
-                    let html = '<div class="analysis-container">';
-                    
-                    // Add image analysis
-                    if (response.analysis && response.analysis.image_analysis) {
-                        const imageAnalysis = response.analysis.image_analysis;
-                        html += `
-                            <div class="mb-4">
-                                <h4 class="analysis-header">Product Identification</h4>
-                                <div><strong>Product:</strong> ${imageAnalysis.product_name || 'Unknown'}</div>
-                                <div class="mt-2"><strong>Description:</strong></div>
-                                <div class="metric-justification">${imageAnalysis.description}</div>
-                            </div>
-                        `;
-                    }
-                    
-                    // Add sustainability analysis
-                    if (response.analysis && response.analysis.sustainability_analysis) {
-                        html += formatAnalysisObject(response.analysis.sustainability_analysis);
-                    }
-                    
-                    html += '</div>';
-                    $('#image-analysis-content').html(html);
+                    $('#image-analysis-content').html(response.formatted_analysis || formatAnalysisObject(response.analysis));
                 }
                 
                 // Scroll to results
@@ -221,7 +200,7 @@ $(document).ready(function() {
         });
     });
     
-    // Format analysis from a JSON object
+    // Helper Functions
     function formatAnalysisObject(analysis) {
         if (!analysis) {
             return '<div class="alert alert-warning">No analysis data available.</div>';
@@ -231,88 +210,28 @@ $(document).ready(function() {
             return `<div class="alert alert-danger">${analysis.error}</div>`;
         }
         
-        // Ultra-concise format (new format)
-        if (analysis.type === 'concise_analysis') {
-            let html = '<div class="ultra-concise-analysis">';
-            
-            // Title with product name
-            html += `<h4 class="concise-title">${analysis.title}</h4>`;
-            
-            // Material info
-            html += `<p class="concise-materials">${analysis.materials}</p>`;
-            
-            // Impact section
-            html += '<p class="concise-section-title">Impact:</p>';
-            html += '<div class="concise-impact-list">';
-            analysis.impact_points.forEach(point => {
-                html += `<p>${point}</p>`;
-            });
-            html += '</div>';
-            
-            // Recyclability & Impact scores
-            html += `<p class="concise-score">${analysis.recyclability}</p>`;
-            html += `<p class="concise-score">${analysis.overall_impact}</p>`;
-            
-            html += '</div>';
-            return html;
-        }
-        
-        // Handle legacy array format 
-        if (Array.isArray(analysis)) {
-            let html = '<div class="analysis-container concise-container">';
-            
-            // Process each section in the analysis array
-            analysis.forEach(section => {
-                switch(section.type) {
-                    case 'summary':
-                        html += `<div class="summary-box">
-                            <h5 class="summary-title">Summary</h5>
-                            <p>${section.content}</p>
-                        </div>`;
-                        break;
-                        
-                    case 'metrics':
-                        html += '<div class="metrics-container">';
-                        section.content.forEach(metric => {
-                            html += createMetricBar(metric.name, metric.score);
-                        });
-                        html += '</div>';
-                        break;
-                        
-                    case 'recommendation':
-                        html += `<div class="recommendation-box">
-                            <h5><i class="fas fa-lightbulb text-warning"></i> Recommendation</h5>
-                            <p>${section.content}</p>
-                        </div>`;
-                        break;
-                    
-                    case 'product_info':
-                        html += `<div class="product-info-box">
-                            <h4 class="product-info-title">Product Identification</h4>
-                            <div class="product-name-label">Product: <span class="product-name-value">${section.content.name}</span></div>
-                            <div class="product-description-label mt-2">Description:</div>
-                            <div class="product-description-value">${section.content.description}</div>
-                        </div>`;
-                        break;
-                        
-                    default:
-                        html += `<div>${JSON.stringify(section.content)}</div>`;
-                }
-            });
-            
-            html += '</div>';
-            return html;
-        }
-        
-        // Original detailed format handling (fallback)
         let html = '<div class="analysis-container">';
-        html += '<h4 class="analysis-header">SUSTAINABILITY ANALYSIS RESULTS</h4>';
         
-        // Format metrics section
-        html += '<div class="mt-4 mb-4"><h5>SUSTAINABILITY METRICS</h5></div>';
+        // Overall sustainability score
+        if (analysis.overall_sustainability_score !== undefined) {
+            let score = parseScore(analysis.overall_sustainability_score);
+            let scoreClass = getScoreClass(score);
+            
+            html += `
+            <div class="metric-container">
+                <div class="metric-name">
+                    Overall Sustainability Score
+                    <span class="metric-score">${score}/10</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill ${scoreClass}" style="--target-width: ${score * 10}%"></div>
+                </div>
+            </div>
+            `;
+        }
         
         // Materials sustainability
-        if ('materials_sustainability' in analysis) {
+        if (analysis.materials_sustainability !== undefined) {
             let score = parseScore(analysis.materials_sustainability);
             let scoreClass = getScoreClass(score);
             
@@ -330,7 +249,7 @@ $(document).ready(function() {
         }
         
         // Manufacturing process
-        if ('manufacturing_process' in analysis) {
+        if (analysis.manufacturing_process !== undefined) {
             let score = parseScore(analysis.manufacturing_process);
             let scoreClass = getScoreClass(score);
             
@@ -348,7 +267,7 @@ $(document).ready(function() {
         }
         
         // Carbon footprint
-        if ('carbon_footprint' in analysis) {
+        if (analysis.carbon_footprint !== undefined) {
             let score = parseScore(analysis.carbon_footprint);
             let scoreClass = getScoreClass(score);
             
@@ -366,7 +285,7 @@ $(document).ready(function() {
         }
         
         // Recyclability
-        if ('recyclability' in analysis) {
+        if (analysis.recyclability !== undefined) {
             let score = parseScore(analysis.recyclability);
             let scoreClass = getScoreClass(score);
             
@@ -383,31 +302,13 @@ $(document).ready(function() {
             `;
         }
         
-        // Overall sustainability score
-        if ('overall_sustainability_score' in analysis) {
-            let score = parseScore(analysis.overall_sustainability_score);
-            let scoreClass = getScoreClass(score);
-            
-            html += `
-            <div class="metric-container">
-                <div class="metric-name">
-                    Overall Sustainability Score
-                    <span class="metric-score">${score}/10</span>
-                </div>
-                <div class="metric-bar">
-                    <div class="metric-fill ${scoreClass}" style="--target-width: ${score * 10}%"></div>
-                </div>
-            </div>
-            `;
-        }
-        
         // Sustainability tags
-        if ('sustainability_tags' in analysis && typeof analysis.sustainability_tags === 'object') {
+        if (analysis.sustainability_tags && typeof analysis.sustainability_tags === 'object') {
             html += '<div class="metric-container"><h5>Sustainability Tags</h5><div class="tags-container">';
             
             for (const [tag, value] of Object.entries(analysis.sustainability_tags)) {
                 if (value && value !== false && value !== "false" && value !== "False") {
-                    const tagName = tag.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const tagName = tag.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
                     html += `<span class="sustainability-tag">${tagName}</span>`;
                 }
             }
@@ -416,21 +317,21 @@ $(document).ready(function() {
         }
         
         // Improvement opportunities
-        if ('improvement_opportunities' in analysis && analysis.improvement_opportunities.length > 0) {
+        if (analysis.improvement_opportunities && analysis.improvement_opportunities.length > 0) {
             html += '<div class="metric-container"><h5>Improvement Opportunities</h5><ul class="list-group">';
             
-            analysis.improvement_opportunities.forEach(opportunity => {
+            for (const opportunity of analysis.improvement_opportunities) {
                 html += `<li class="list-group-item">${opportunity}</li>`;
-            });
+            }
             
             html += '</ul></div>';
         }
         
         // Sustainability justification
-        if ('sustainability_justification' in analysis && analysis.sustainability_justification) {
+        if (analysis.sustainability_justification) {
             html += `
             <div class="metric-container">
-                <h5>Sustainability Assessment</h5>
+                <h5>Assessment Explanation</h5>
                 <div class="metric-justification">${analysis.sustainability_justification}</div>
             </div>
             `;
@@ -440,373 +341,288 @@ $(document).ready(function() {
         return html;
     }
     
-    // Display alternatives
     function displayAlternatives(alternatives) {
-        if (!alternatives || alternatives.length === 0) {
-            $('#alternatives-content').html('<div class="alert alert-warning">No eco-friendly alternatives found.</div>');
-            return;
-        }
-        
         let html = '';
         
-        alternatives.forEach((alt, index) => {
-            const product = alt.product;
-            const isGenerated = alt.generated || false;
+        alternatives.forEach(function(alternative, index) {
+            const colClass = alternatives.length > 2 ? 'col-md-4' : 'col-md-6';
+            html += `<div class="${colClass} mb-4">`;
             
-            // Create product card
-            html += `
-            <div class="col-md-6 mb-4">
+            if (alternative.product) {
+                // Format the product content
+                const product = alternative.product;
+                const name = product.name || 'Alternative Product';
+                const price = product.price || '';
+                const description = product.description || '';
+                const url = product.url || '#';
+                
+                html += `
                 <div class="product-card">
-                    <div class="product-name">${product.name}</div>
-                    <div class="product-price">$${product.price.toFixed(2)}</div>
-                    <div class="product-description">${product.description}</div>
+                    <div class="product-name">${name}</div>
+                `;
+                
+                if (price) {
+                    html += `<div class="product-price">$${parseFloat(price).toFixed(2)}</div>`;
+                }
+                
+                html += `<div class="product-description">${description}</div>`;
+                
+                // Add improvement reasons if available
+                if (alternative.improvement_reasons && alternative.improvement_reasons.length > 0) {
+                    html += '<div class="improvements-container"><h6>Sustainability Improvements:</h6>';
                     
-                    <div class="improvements-container">
-                        <div><strong>Sustainability Improvements:</strong></div>
-            `;
-            
-            // Add improvement reasons
-            if (alt.improvement_reasons && alt.improvement_reasons.length > 0) {
-                alt.improvement_reasons.forEach(reason => {
-                    html += `<div class="improvement-item">${reason}</div>`;
-                });
+                    alternative.improvement_reasons.forEach(function(reason) {
+                        html += `<div class="improvement-item">${reason}</div>`;
+                    });
+                    
+                    html += '</div>';
+                }
+                
+                if (url && url !== '#') {
+                    html += `<a href="${url}" class="product-link" target="_blank">View Product</a>`;
+                }
+                
+                html += `</div>`;
             } else {
-                html += `<div class="improvement-item">Overall better sustainability score</div>`;
-            }
-            
-            html += `
-                    </div>
-                    
-                    <div class="mt-3">
-                        <div><strong>Overall Score:</strong></div>
-                        <div class="score-indicator">
-                            <div class="score-fill score-good" style="width: ${(parseScore(product.sustainability_metrics.overall_sustainability_score) * 10)}%"></div>
-                        </div>
-                        <span class="score-text">${parseScore(product.sustainability_metrics.overall_sustainability_score)}/10</span>
-                    </div>
-            `;
-            
-            // Add source indication for generated products
-            if (isGenerated) {
-                html += `<div class="mt-2"><small class="text-muted">AI-suggested alternative</small></div>`;
-            }
-            
-            // Close the card
-            html += `
-                    <div class="mt-3">
-                        <a href="#" class="product-link btn-block">View Product Details</a>
-                    </div>
+                // If the alternative doesn't have a product object
+                html += `
+                <div class="product-card">
+                    <div class="product-name">Alternative ${index + 1}</div>
+                    <div class="product-description">No detailed information available.</div>
                 </div>
-            </div>
-            `;
+                `;
+            }
+            
+            html += '</div>';
         });
         
         $('#alternatives-content').html(html);
     }
     
-    // Display greenwashing analysis
-    function displayGreenwashing(analysis) {
-        if (!analysis) {
+    function displayGreenwashing(greenwashing) {
+        if (!greenwashing) {
             $('#greenwashing-content').html('<div class="alert alert-warning">No greenwashing analysis available.</div>');
             return;
         }
         
-        if (analysis.error) {
-            $('#greenwashing-content').html(`<div class="alert alert-danger">${analysis.error}</div>`);
+        if (greenwashing.error) {
+            $('#greenwashing-content').html(`<div class="alert alert-danger">${greenwashing.error}</div>`);
             return;
         }
         
-        let html = `
-        <div class="analysis-container">
-            <div class="mb-4">
-                <h4>Greenwashing Risk Assessment</h4>
-        `;
+        let html = '<div class="analysis-container">';
         
-        // Display risk level with appropriate color
-        let riskColor = 'success';
-        if (analysis.greenwashing_risk === 'Medium') {
-            riskColor = 'warning';
-        } else if (analysis.greenwashing_risk === 'High') {
-            riskColor = 'danger';
-        }
-        
-        html += `
-                <div class="alert alert-${riskColor}">
-                    <strong>Risk Level: ${analysis.greenwashing_risk || 'Unknown'}</strong>
-                </div>
-            </div>
-        `;
-        
-        // Display explanation
-        if (analysis.explanation) {
-            html += `
-            <div class="metric-container">
-                <h5>Analysis</h5>
-                <div class="metric-justification">${analysis.explanation}</div>
-            </div>
-            `;
-        }
-        
-        // Display issues if any
-        if (analysis.issues && analysis.issues.length > 0) {
-            html += `
-            <div class="metric-container">
-                <h5>Potential Issues</h5>
-                <ul class="list-group">
-            `;
+        // Greenwashing risk
+        if (greenwashing.greenwashing_risk) {
+            let riskClass = '';
+            switch (greenwashing.greenwashing_risk.toLowerCase()) {
+                case 'high':
+                    riskClass = 'text-danger fw-bold';
+                    break;
+                case 'medium':
+                    riskClass = 'text-warning fw-bold';
+                    break;
+                case 'low':
+                    riskClass = 'text-success fw-bold';
+                    break;
+                default:
+                    riskClass = '';
+            }
             
-            analysis.issues.forEach(issue => {
+            html += `
+            <div class="metric-container">
+                <h5>Greenwashing Risk</h5>
+                <p class="${riskClass}">${greenwashing.greenwashing_risk}</p>
+            </div>
+            `;
+        }
+        
+        // Issues
+        if (greenwashing.issues && greenwashing.issues.length > 0) {
+            html += '<div class="metric-container"><h5>Potential Issues</h5><ul class="list-group">';
+            
+            greenwashing.issues.forEach(function(issue) {
                 html += `<li class="list-group-item list-group-item-warning">${issue}</li>`;
             });
             
+            html += '</ul></div>';
+        }
+        
+        // Vague claims
+        if (greenwashing.vague_claims && greenwashing.vague_claims.length > 0) {
+            html += '<div class="metric-container"><h5>Vague Environmental Claims</h5><ul class="list-group">';
+            
+            greenwashing.vague_claims.forEach(function(claim) {
+                html += `<li class="list-group-item">${claim}</li>`;
+            });
+            
+            html += '</ul></div>';
+        }
+        
+        // Explanation
+        if (greenwashing.explanation) {
             html += `
-                </ul>
+            <div class="metric-container">
+                <h5>Explanation</h5>
+                <div class="metric-justification">${greenwashing.explanation}</div>
             </div>
             `;
         }
         
-        // Display vague claims if any
-        if (analysis.vague_claims && analysis.vague_claims.length > 0) {
-            html += `
-            <div class="metric-container">
-                <h5>Vague or Unsubstantiated Claims</h5>
-                <ul class="list-group">
-            `;
+        // Recommendations
+        if (greenwashing.recommendations && greenwashing.recommendations.length > 0) {
+            html += '<div class="metric-container"><h5>Recommendations</h5><ul class="list-group">';
             
-            analysis.vague_claims.forEach(claim => {
-                html += `<li class="list-group-item list-group-item-warning">${claim}</li>`;
+            greenwashing.recommendations.forEach(function(recommendation) {
+                html += `<li class="list-group-item list-group-item-info">${recommendation}</li>`;
             });
             
-            html += `
-                </ul>
-            </div>
-            `;
-        }
-        
-        // Display misleading terms if any
-        if (analysis.misleading_terms && analysis.misleading_terms.length > 0) {
-            html += `
-            <div class="metric-container">
-                <h5>Potentially Misleading Terms</h5>
-                <ul class="list-group">
-            `;
-            
-            analysis.misleading_terms.forEach(term => {
-                html += `<li class="list-group-item list-group-item-warning">${term}</li>`;
-            });
-            
-            html += `
-                </ul>
-            </div>
-            `;
-        }
-        
-        // Display missing information if any
-        if (analysis.missing_information && analysis.missing_information.length > 0) {
-            html += `
-            <div class="metric-container">
-                <h5>Missing Information</h5>
-                <ul class="list-group">
-            `;
-            
-            analysis.missing_information.forEach(info => {
-                html += `<li class="list-group-item list-group-item-info">${info}</li>`;
-            });
-            
-            html += `
-                </ul>
-            </div>
-            `;
-        }
-        
-        // Display recommendations if any
-        if (analysis.recommendations && analysis.recommendations.length > 0) {
-            html += `
-            <div class="metric-container">
-                <h5>Recommendations for Improvement</h5>
-                <ul class="list-group">
-            `;
-            
-            analysis.recommendations.forEach(rec => {
-                html += `<li class="list-group-item list-group-item-success">${rec}</li>`;
-            });
-            
-            html += `
-                </ul>
-            </div>
-            `;
+            html += '</ul></div>';
         }
         
         html += '</div>';
+        
         $('#greenwashing-content').html(html);
     }
     
-    // Display material alternatives
     function displayMaterialAlternatives(alternatives) {
         if (!alternatives || Object.keys(alternatives).length === 0) {
-            $('#materials-content').html('<div class="alert alert-warning">No sustainable alternatives found for the specified materials.</div>');
+            $('#materials-content').html('<div class="alert alert-warning">No alternatives found for the specified materials.</div>');
             return;
         }
         
         let html = '';
         
-        for (const [material, alts] of Object.entries(alternatives)) {
+        for (const [material, materialAlternatives] of Object.entries(alternatives)) {
+            if (!materialAlternatives || materialAlternatives.length === 0) continue;
+            
             html += `
             <div class="material-alternative">
-                <h4 class="material-name">${material}</h4>
+                <div class="material-name">${material}</div>
+                <div class="alternatives-list">
             `;
             
-            if (alts && alts.length > 0) {
-                alts.forEach(alt => {
-                    html += `
-                    <div class="alternative-item">
-                        <div class="alternative-name">${alt.name || 'Unknown Alternative'}</div>
-                        
-                        <div class="mt-2"><strong>Benefits:</strong></div>
-                        <div class="benefits-list">${alt.benefits || 'No specific benefits listed'}</div>
-                        
-                        ${alt.considerations ? 
-                            `<div class="mt-2"><strong>Considerations:</strong></div>
-                            <div class="considerations-list">${alt.considerations}</div>` : ''}
-                    </div>
-                    `;
-                });
-            } else {
-                html += '<div class="alert alert-warning">No specific alternatives found for this material.</div>';
-            }
+            materialAlternatives.forEach(function(alt) {
+                html += `
+                <div class="alternative-item">
+                    <div class="alternative-name">${alt.name || 'Alternative'}</div>
+                `;
+                
+                if (alt.benefits) {
+                    html += `<div><strong>Benefits:</strong> ${alt.benefits}</div>`;
+                }
+                
+                if (alt.considerations) {
+                    html += `<div><strong>Considerations:</strong> ${alt.considerations}</div>`;
+                }
+                
+                html += '</div>';
+            });
             
-            html += '</div>';
+            html += '</div></div>';
         }
         
         $('#materials-content').html(html);
     }
     
-    // Load categories
     function loadCategories() {
         $.ajax({
             url: '/categories',
             method: 'GET',
             success: function(response) {
                 if (response.categories && response.categories.length > 0) {
-                    let html = '';
-                    
-                    response.categories.forEach(category => {
-                        html += `
-                        <div class="col-md-4 col-sm-6 mb-3">
-                            <button class="category-btn btn-block w-100" data-category="${category.id}">
-                                <i class="fas fa-${category.icon || 'tag'} me-2"></i>${category.name}
-                            </button>
-                        </div>
-                        `;
-                    });
-                    
-                    $('#categories-list').html(html);
-                    
-                    // Add click handlers for category buttons
-                    $('.category-btn').click(function() {
-                        const categoryId = $(this).data('category');
-                        const categoryName = $(this).text().trim();
-                        
-                        // Show loading
-                        $('#category-content').html('<div class="spinner-container"><div class="spinner"></div><p>Loading eco-friendly products...</p></div>');
-                        $('#category-title').html(`<i class="fas fa-list me-2"></i>${categoryName} - Eco-Friendly Options`);
-                        $('#category-results').show();
-                        
-                        // Fetch category products
-                        $.ajax({
-                            url: `/category_products/${categoryId}`,
-                            method: 'GET',
-                            success: function(response) {
-                                if (response.products && response.products.length > 0) {
-                                    let html = '';
-                                    
-                                    response.products.forEach(product => {
-                                        html += `
-                                        <div class="col-md-6 mb-4">
-                                            <div class="product-card">
-                                                <div class="product-name">${product.product.name}</div>
-                                                <div class="product-price">$${product.product.price.toFixed(2)}</div>
-                                                <div class="product-description">${product.product.description}</div>
-                                                
-                                                <div class="mt-3">
-                                                    <div><strong>Sustainability Score:</strong></div>
-                                                    <div class="score-indicator">
-                                                        <div class="score-fill score-good" style="width: ${(parseScore(product.product.sustainability_metrics.overall_sustainability_score) * 10)}%"></div>
-                                                    </div>
-                                                    <span class="score-text">${parseScore(product.product.sustainability_metrics.overall_sustainability_score)}/10</span>
-                                                </div>
-                                                
-                                                <div class="mt-3">
-                                                    <a href="#" class="product-link btn-block">View Product Details</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        `;
-                                    });
-                                    
-                                    $('#category-content').html(html);
-                                } else {
-                                    $('#category-content').html('<div class="alert alert-warning">No eco-friendly products found in this category.</div>');
-                                }
-                                
-                                // Scroll to results
-                                $('html, body').animate({
-                                    scrollTop: $('#category-results').offset().top - 70
-                                }, 500);
-                            },
-                            error: function() {
-                                $('#category-content').html('<div class="alert alert-danger">Error loading category products. Please try again.</div>');
-                            }
-                        });
-                    });
+                    displayCategories(response.categories);
                 } else {
-                    $('#categories-list').html('<div class="alert alert-warning">No product categories available.</div>');
+                    $('#categories-list').html('<div class="alert alert-info">No product categories available.</div>');
                 }
             },
             error: function() {
-                $('#categories-list').html('<div class="alert alert-danger">Error loading categories. Please refresh the page to try again.</div>');
+                $('#categories-list').html('<div class="alert alert-danger">Error loading categories. Please refresh the page.</div>');
             }
         });
     }
     
-    // Helper function: Create a metric bar
-    function createMetricBar(name, score) {
-        const parsedScore = parseScore(score);
-        const scoreClass = getScoreClass(parsedScore);
+    function displayCategories(categories) {
+        let html = '';
         
-        return `
-        <div class="metric-container">
-            <div class="metric-name">
-                ${name}
-                <span class="metric-score">${parsedScore}/10</span>
+        categories.forEach(function(category) {
+            const icon = category.icon ? `<i class="fas fa-${category.icon} me-2"></i>` : '';
+            const name = category.name || category.id;
+            const id = category.id;
+            
+            html += `
+            <div class="col-6 col-md-4 col-lg-3 mb-3">
+                <button class="category-btn w-100" data-category="${id}">
+                    ${icon}${name}
+                </button>
             </div>
-            <div class="metric-bar">
-                <div class="metric-fill ${scoreClass}" style="--target-width: ${parsedScore * 10}%"></div>
-            </div>
-        </div>
-        `;
+            `;
+        });
+        
+        $('#categories-list').html(html);
+        
+        // Add click handlers for category buttons
+        $('.category-btn').click(function() {
+            const category = $(this).data('category');
+            $('#category-title').html(`<i class="fas fa-list me-2"></i>${$(this).text().trim()} Products`);
+            loadCategoryProducts(category);
+        });
     }
     
-    // Helper function: Parse score value
+    function loadCategoryProducts(category) {
+        // Show loading spinner
+        $('#category-content').html('<div class="spinner-container"><div class="spinner"></div><p>Loading eco-friendly products...</p></div>');
+        $('#category-results').show();
+        
+        // Scroll to category results
+        $('html, body').animate({
+            scrollTop: $('#category-results').offset().top - 70
+        }, 500);
+        
+        // Load products for the category
+        $.ajax({
+            url: `/category_products/${category}`,
+            method: 'GET',
+            success: function(response) {
+                if (response.products && response.products.length > 0) {
+                    displayAlternatives(response.products);
+                } else {
+                    $('#category-content').html('<div class="alert alert-warning">No products found in this category.</div>');
+                }
+            },
+            error: function() {
+                $('#category-content').html('<div class="alert alert-danger">Error loading products. Please try again.</div>');
+            }
+        });
+    }
+    
+    // Helper function to parse score values
     function parseScore(score) {
         if (typeof score === 'string') {
+            // Remove any trailing /10 or similar
+            score = score.split('/')[0].trim();
             score = parseFloat(score);
+        } else if (typeof score === 'number') {
+            score = score;
+        } else {
+            score = 0;
         }
         
-        if (isNaN(score) || score === null || score === undefined) {
-            return 5.0; // Default value
+        // Scale to 0-10 if it appears to be on a 0-100 scale
+        if (score > 10) {
+            score = score / 10;
         }
         
-        // Clamp between 0 and 10
-        return Math.max(0, Math.min(10, score)).toFixed(1);
+        // Clamp to 0-10 and round to 1 decimal place
+        return Math.max(0, Math.min(10, Math.round(score * 10) / 10));
     }
     
-    // Helper function: Get score class based on value
+    // Helper function to get CSS class for score
     function getScoreClass(score) {
         if (score >= 7) {
             return "metric-fill"; // Good (green)
         } else if (score >= 4) {
-            return "medium-fill"; // Medium (yellow)
+            return "medium-fill"; // Medium (yellow/orange)
         } else {
             return "bad-fill"; // Bad (red)
         }

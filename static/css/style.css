@@ -1,14 +1,6 @@
 /* Main styling */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
-}
-
-/* Navbar */
-.navbar-brand {
-    font-weight: bold;
-    font-size: 1.5rem;
 }
 
 /* Cards */
@@ -70,7 +62,7 @@ body {
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 20px;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
     height: 100%;
     display: flex;
@@ -87,13 +79,12 @@ body {
     font-weight: bold;
     color: #28a745;
     margin-bottom: 10px;
-    border-bottom: 2px solid #e9f7ef;
+    border-bottom: 2px solid rgba(40, 167, 69, 0.2);
     padding-bottom: 8px;
 }
 
 .product-price {
     font-weight: bold;
-    color: #6c757d;
     font-size: 1.1rem;
     margin-bottom: 10px;
 }
@@ -101,13 +92,12 @@ body {
 .product-description {
     margin: 10px 0;
     font-size: 0.9rem;
-    color: #555;
     flex-grow: 1;
 }
 
 .product-tag {
     display: inline-block;
-    background-color: #e9f7ef;
+    background-color: rgba(40, 167, 69, 0.15);
     color: #28a745;
     padding: 3px 8px;
     border-radius: 20px;
@@ -121,7 +111,7 @@ body {
 }
 
 .improvement-item {
-    background-color: #e8f4fd;
+    background-color: rgba(0, 102, 204, 0.1);
     color: #0066cc;
     padding: 5px 10px;
     border-radius: 5px;
@@ -177,7 +167,7 @@ body {
 
 /* Material alternatives */
 .material-alternative {
-    background-color: #f8f9fa;
+    background-color: rgba(248, 249, 250, 0.1);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 15px;
@@ -188,13 +178,13 @@ body {
     font-weight: bold;
     font-size: 1.1rem;
     color: #28a745;
-    border-bottom: 2px solid #28a745;
+    border-bottom: 2px solid rgba(40, 167, 69, 0.3);
     padding-bottom: 5px;
     margin-bottom: 10px;
 }
 
 .alternative-item {
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.05);
     border-left: 4px solid #28a745;
     padding: 10px;
     margin-bottom: 10px;
@@ -216,14 +206,14 @@ body {
     font-family: 'Roboto', sans-serif;
     line-height: 1.6;
     padding: 15px;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .analysis-header {
     color: #28a745;
-    border-bottom: 2px solid #e9f7ef;
+    border-bottom: 2px solid rgba(40, 167, 69, 0.2);
     padding-bottom: 10px;
     margin-bottom: 15px;
     font-weight: 600;
@@ -231,7 +221,7 @@ body {
 
 .metric-container {
     margin-bottom: 25px;
-    background-color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -253,9 +243,8 @@ body {
 }
 
 .metric-score {
-    color: #555;
     font-weight: 700;
-    background-color: #f8f9fa;
+    background-color: rgba(248, 249, 250, 0.1);
     padding: 3px 10px;
     border-radius: 20px;
     font-size: 0.9rem;
@@ -301,9 +290,8 @@ body {
 
 .metric-justification {
     font-size: 0.9rem;
-    color: #666;
     padding: 10px 12px;
-    background-color: #f8f9fa;
+    background-color: rgba(248, 249, 250, 0.1);
     border-radius: 6px;
     margin-top: 10px;
     border-left: 3px solid #20c997;
@@ -312,7 +300,7 @@ body {
 .sustainability-tag {
     display: inline-block;
     padding: 3px 10px;
-    background-color: #e9f7ef;
+    background-color: rgba(40, 167, 69, 0.15);
     color: #28a745;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -321,11 +309,10 @@ body {
 }
 
 .justification-box {
-    background-color: #f8f9fa;
+    background-color: rgba(248, 249, 250, 0.1);
     border-left: 3px solid #28a745;
     padding: 10px 15px;
     margin: 15px 0;
-    color: #555;
 }
 
 .justification-box h4 {
@@ -381,140 +368,10 @@ body {
     }
 }
 
-/* Concise analysis container */
-.concise-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 25px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    background-color: white;
-}
-
-.summary-box {
-    background-color: #e8f4f8;
-    border-left: 4px solid #0099cc;
-    padding: 15px 20px;
-    margin-bottom: 25px;
-    border-radius: 6px;
-}
-
-.summary-title {
-    color: #0099cc;
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
-.metrics-container {
-    margin-bottom: 25px;
-}
-
-.recommendation-box {
-    background-color: #fff8e1;
-    border-left: 4px solid #ffc107;
-    padding: 15px 20px;
-    margin-top: 25px;
-    border-radius: 6px;
-}
-
-.recommendation-box h5 {
-    color: #f57c00;
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
+/* Tags container */
 .tags-container {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-}
-
-.product-info-box {
-    background-color: #f1f8e9;
-    border-left: 4px solid #7cb342;
-    padding: 15px 20px;
-    margin-bottom: 25px;
-    border-radius: 6px;
-}
-
-.product-info-title {
-    color: #558b2f;
-    margin-bottom: 15px;
-    font-weight: 600;
-}
-
-.product-name-value {
-    font-weight: 600;
-    color: #333;
-}
-
-.product-description-value {
-    background-color: rgba(255, 255, 255, 0.5);
-    padding: 10px;
-    border-radius: 4px;
-    line-height: 1.5;
-    margin-top: 5px;
-    max-height: 150px;
-    overflow-y: auto;
-}
-
-/* Ultra-concise analysis format */
-.ultra-concise-analysis {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 30px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    line-height: 1.6;
-    white-space: pre-line;
-}
-
-.concise-title {
-    font-weight: 700;
-    color: #28a745;
-    margin-bottom: 18px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e0e0e0;
-    font-size: 1.2rem;
-}
-
-.concise-materials {
-    font-weight: 500;
-    margin-bottom: 20px;
-}
-
-.concise-section-title {
-    font-weight: 600;
-    margin-bottom: 8px;
-    margin-top: 20px;
-}
-
-.concise-impact-list {
-    margin: 0 0 15px 0;
-    padding: 0;
-    list-style-type: none;
-}
-
-.concise-impact-list li {
-    margin-bottom: 6px;
-    padding-left: 18px;
-    position: relative;
-}
-
-.concise-impact-list li:before {
-    content: "•";
-    position: absolute;
-    left: 0;
-    color: #28a745;
-    font-weight: bold;
-}
-
-.concise-score {
-    padding: 8px 12px;
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    font-weight: 500;
+    margin-top: 10px;
 }
