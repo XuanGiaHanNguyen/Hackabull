@@ -58,20 +58,25 @@ body {
 
 /* Product cards */
 .product-card {
+    padding: 15px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    padding: 15px;
     margin-bottom: 20px;
-    background-color: rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
+    transition: transform 0.2s;
     height: 100%;
-    display: flex;
-    flex-direction: column;
 }
 
 .product-card:hover {
-    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
     transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 10px;
 }
 
 .product-name {
@@ -102,6 +107,15 @@ body {
     padding: 3px 8px;
     border-radius: 20px;
     font-size: 0.8rem;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.eco-features {
+    margin: 10px 0;
+}
+
+.eco-features .badge {
     margin-right: 5px;
     margin-bottom: 5px;
 }
@@ -357,12 +371,12 @@ body {
     .d-flex {
         flex-direction: column;
     }
-    
+
     .btn {
         margin-bottom: 10px;
         width: 100%;
     }
-    
+
     .product-card {
         height: auto;
     }
