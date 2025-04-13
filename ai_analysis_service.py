@@ -544,24 +544,7 @@ class SustainabilityAnalyzer:
                     </div>
                     '''
                 
-                # Greenwashing risk
-                if "greenwashing_risk" in sustainability_data:
-                    risk = sustainability_data["greenwashing_risk"]
-                    risk_class = ""
-                    
-                    if risk.lower() == "high":
-                        risk_class = "text-danger fw-bold"
-                    elif risk.lower() == "medium":
-                        risk_class = "text-warning fw-bold"
-                    elif risk.lower() == "low":
-                        risk_class = "text-success fw-bold"
-                    
-                    html += f'''
-                    <div class="metric-container">
-                        <h5>Greenwashing Risk</h5>
-                        <p class="{risk_class}">{risk}</p>
-                    </div>
-                    '''
+                # Greenwashing risk section removed
             
             # Overall sustainability score
             if "overall_sustainability_score" in analysis:

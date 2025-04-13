@@ -115,25 +115,7 @@ def analyze_product():
         logger.error(f"Error analyzing product: {str(e)}")
         return jsonify({"analysis": {"error": f"Error analyzing product: {str(e)}"}}), 500
 
-@app.route('/greenwashing', methods=['POST'])
-def check_greenwashing():
-    try:
-        description = request.form.get('description')
-        
-        if not description:
-            return jsonify({"error": "Product description is required"}), 400
-            
-        logger.debug(f"Checking greenwashing for: {description[:50]}...")
-        
-        # Check for greenwashing
-        greenwashing = analyzer.identify_greenwashing(description)
-        
-        # Return the greenwashing analysis
-        return jsonify({"greenwashing": greenwashing})
-    
-    except Exception as e:
-        logger.error(f"Error checking greenwashing: {str(e)}")
-        return jsonify({"greenwashing": {"error": f"Error checking greenwashing: {str(e)}"}}), 500
+
 
 @app.route('/alternatives', methods=['POST'])
 def find_alternatives():
