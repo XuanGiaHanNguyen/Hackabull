@@ -1,77 +1,148 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import banner from "../assets/bg/banner1.png"
-import { SeedIcon, MenuIcon } from "../assets/icon"
+import banner from "../assets/bg/banner1.png";
+import { SeedIcon, MenuIcon } from "../assets/icon";
 import { isAuthenticated, logoutUser } from "./Auth/authService";
+import { getPosts, createPost } from '../services/api';
+import PostCard from '../component/PostCard';
 
 const Marketplace = () => {
     const [location, setLocation] = useState('');
     const [budget, setBudget] = useState('');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState(null);
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    
+    // Create Post Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formError, setFormError] = useState('');
+    const [formData, setFormData] = useState({
+        productName: '',
+        price: '',
+        place: '',
+        description: '',
+        productImage: null,
+    });
 
     // Check authentication status when component mounts
-      useEffect(() => {
-        const checkAuth = () => {
-          const loggedIn = isAuthenticated();
-          setIsLoggedIn(loggedIn);
-          
-          if (loggedIn) {
-            // Get user data from localStorage
-            try {
-              const userData = JSON.parse(localStorage.getItem('userData'));
-              setUser(userData);
-            } catch (error) {
-              console.error("Error parsing user data:", error);
-            }
+    useEffect(() => {
+      const checkAuth = () => {
+        const loggedIn = isAuthenticated();
+        setIsLoggedIn(loggedIn);
+        
+        if (loggedIn) {
+          // Get user data from localStorage
+          try {
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            setUser(userData);
+          } catch (error) {
+            console.error("Error parsing user data:", error);
           }
-        };
-        checkAuth();
-      }, []);
-
-      const handleLogout = () => {
-        logoutUser();
-        setIsLoggedIn(false);
-        setUser(null);
-        // Optionally, you can redirect to login page
-        // navigate('/login');
+        }
       };
-    
-    // Sample products data
-    const [products, setProducts] = useState([
-      {
-        id: 1,
-        name: "Eco-Friendly Water Bottle",
-        price: 24.99,
-        rating: 4.5,
-        shop: "GreenEarth",
-        image: "/api/placeholder/200/200"
-      },
-      {
-        id: 2,
-        name: "Bamboo Cutlery Set",
-        price: 15.99,
-        rating: 4.8,
-        shop: "EcoLiving",
-        image: "/api/placeholder/200/200"
-      },
-      {
-        id: 3,
-        name: "Reusable Produce Bags",
-        price: 12.50,
-        rating: 4.3,
-        shop: "GreenEarth",
-        image: "/api/placeholder/200/200"
-      },
-      {
-        id: 4,
-        name: "Solar Power Bank",
-        price: 45.99,
-        rating: 4.7,
-        shop: "EcoTech",
-        image: "/api/placeholder/200/200"
+      checkAuth();
+    }, []);
+
+    // Fetch posts when component mounts
+    useEffect(() => {
+      fetchPosts();
+    }, []);
+
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const response = await getPosts();
+        setPosts(response.data.data);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to fetch posts');
+      } finally {
+        setLoading(false);
       }
-    ]);
+    };
+
+    const handleLogout = () => {
+      logoutUser();
+      setIsLoggedIn(false);
+      setUser(null);
+    };
+    
+    // Modal functions
+    const openModal = () => {
+      if (!isLoggedIn) {
+        // Redirect to login or show login prompt
+        alert("Please sign in to create a post");
+        return;
+      }
+      setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+      setIsModalOpen(false);
+      // Reset form
+      setFormData({
+        productName: '',
+        price: '',
+        place: '',
+        description: '',
+        productImage: null,
+      });
+      setFormError('');
+    };
+    
+    // Form handlers
+    const handleFormChange = (e) => {
+      const { name, value } = e.target;
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    };
+    
+    const handleFileChange = (e) => {
+      setFormData({
+        ...formData,
+        productImage: e.target.files[0],
+      });
+    };
+    
+    const handleFormSubmit = async (e) => {
+      e.preventDefault();
+      setIsSubmitting(true);
+      setFormError('');
+      
+      try {
+        const form = new FormData();
+        
+        // Add user data
+        form.append('userId', user?.id || user?._id);
+        form.append('userName', user?.name || user?.email.split('@')[0]);
+        form.append('userEmail', user?.email);
+        
+        // Add product data
+        form.append('productName', formData.productName);
+        form.append('price', formData.price);
+        form.append('place', formData.place);
+        form.append('description', formData.description);
+        
+        // Add image if it exists
+        if (formData.productImage) {
+          form.append('productImage', formData.productImage);
+        }
+        
+        await createPost(form);
+        
+        // Close modal and refresh posts
+        closeModal();
+        fetchPosts();
+      } catch (err) {
+        setFormError(err.response?.data?.error || 'Error creating post');
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
     
     // Filter states
     const [selectedShops, setSelectedShops] = useState([]);
@@ -90,6 +161,153 @@ const Marketplace = () => {
       }
     };
     
+    // Render loading state
+    const renderLoading = () => (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#688268]"></div>
+      </div>
+    );
+
+    // Render error state
+    const renderError = () => (
+      <div className="bg-red-50 text-red-500 p-4 rounded-md">
+        Error: {error}
+      </div>
+    );
+
+    // Render empty state
+    const renderEmpty = () => (
+      <div className="text-center py-12">
+        <h3 className="text-xl font-medium text-gray-600">No listings found</h3>
+        <p className="text-gray-500 mt-2">Be the first to create a listing!</p>
+      </div>
+    );
+
+    // Modal for creating posts
+    const renderCreatePostModal = () => (
+      <>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="max-w-2xl w-full mx-4 p-6 bg-white rounded-lg shadow-md max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-[#4d6b5a]">Create New Listing</h2>
+                <button 
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+              
+              {formError && (
+                <div className="mb-4 p-4 bg-red-50 text-red-500 rounded-md">
+                  {formError}
+                </div>
+              )}
+              
+              <form onSubmit={handleFormSubmit}>
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2 text-left" htmlFor="productName">
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="productName"
+                    name="productName"
+                    value={formData.productName}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#688268]"
+                    required
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2 text-left" htmlFor="price">
+                    Price *
+                  </label>
+                  <input
+                    type="number"
+                    id="price"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleFormChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#688268]"
+                    required
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2 text-left" htmlFor="place">
+                    Location *
+                  </label>
+                  <input
+                    type="text"
+                    id="place"
+                    name="place"
+                    value={formData.place}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#688268]"
+                    required
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2 text-left" htmlFor="description">
+                    Description *
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleFormChange}
+                    rows="4"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#688268]"
+                    required
+                  ></textarea>
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-gray-700 font-bold mb-2 text-left" htmlFor="productImage">
+                    Product Image *
+                  </label>
+                  <input
+                    type="file"
+                    id="productImage"
+                    name="productImage"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#688268]"
+                    required
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-md focus:outline-none"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-[#688268] hover:bg-[#425442] text-white font-bold py-2 px-4 rounded-md focus:outline-none disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Creating...' : 'Create Listing'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </>
+    );
+
     return (
       <div className="flex items-center justify-center transition-all duration-1000 ease-in-out relative">
         <div className="relative z-10 text-center w-full flex flex-col min-h-screen">
@@ -102,25 +320,25 @@ const Marketplace = () => {
               </Link>
               <div className="flex flex-row gap-4">
                   {isLoggedIn ? (
-                               <>
-                                 {/* Display user email or name if available */}
-                                 {user && (
-                                   <span className="text-neutral-300 mr-2 mt-1 font-semibold">
-                                     Welcome, {user.email.split('@')[0]}
-                                   </span>
-                                 )}
-                                 <button 
-                                   onClick={handleLogout}
-                                   className="font-semibold px-5 py-1 text-neutral-300 rounded-lg hover:scale-110"
-                                 >
-                                   Sign Out
-                                 </button>
-                               </>
-                             ) : (
-                               <Link to="/login" className="font-semibold px-5 py-1 text-neutral-300 rounded-lg hover:scale-110">
-                                 Sign In
-                               </Link>
-                             )}
+                    <>
+                      {/* Display user email or name if available */}
+                      {user && (
+                        <span className="text-neutral-300 mr-2 mt-1 font-semibold">
+                          Welcome, {user.email.split('@')[0]}
+                        </span>
+                      )}
+                      <button 
+                        onClick={handleLogout}
+                        className="font-semibold px-5 py-1 text-neutral-300 rounded-lg hover:scale-110"
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <Link to="/login" className="font-semibold px-5 py-1 text-neutral-300 rounded-lg hover:scale-110">
+                      Sign In
+                    </Link>
+                  )}
                   <div>
                       {MenuIcon}
                   </div>
@@ -183,14 +401,17 @@ const Marketplace = () => {
             {/* Filter Section */}
             <div className="w-1/4 p-4 flex flex-col gap-4">
 
-            <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between">
+              <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between">
                 <h2 className="text-2xl font-semibold text-[#4d6b5a]">
                     Retailer
                 </h2>
-                <button className="bg-[#4d6b5a] text-white px-4 py-2 rounded-lg hover:bg-[#3c5548] transition">
-                    Create Post
+                <button 
+                  onClick={openModal}
+                  className="bg-[#4d6b5a] text-white px-4 py-2 rounded-lg hover:bg-[#3c5548] transition"
+                >
+                  Create Post
                 </button>
-            </div>
+              </div>
 
               <div className="bg-white rounded-xl shadow-md p-6 ">
                 <h2 className="text-2xl font-semibold text-[#4d6b5a] mb-4 text-left">
@@ -266,7 +487,7 @@ const Marketplace = () => {
               </div>
             </div>
             
-            {/* Products Display Section */}
+            {/* Products Display Section with PostList integrated */}
             <div className="w-3/4 p-4">
               <div className="bg-white rounded-xl shadow-md p-6 h-full">
                 <div className="flex justify-between items-center mb-6">
@@ -284,56 +505,40 @@ const Marketplace = () => {
                   </div>
                 </div>
                 
-                {/* Products Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((product) => (
-                    <div 
-                      key={product.id} 
-                      className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-                    >
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="p-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">{product.shop}</span>
-                          <div className="flex items-center">
-                            <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                            </svg>
-                            <span className="ml-1 text-sm text-gray-500">{product.rating}</span>
-                          </div>
-                        </div>
-                        <h3 className="mt-2 text-lg font-medium text-gray-800 text-left">{product.name}</h3>
-                        <p className="mt-1 text-xl font-semibold text-[#4d6b5a] text-left">${product.price}</p>
-                        <button className="mt-4 w-full bg-[#688268] hover:bg-[#425442] text-white py-2 rounded font-medium">
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {/* Integrated PostList */}
+                {loading ? renderLoading() : 
+                  error ? renderError() : 
+                  posts.length === 0 ? renderEmpty() : 
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {posts.map((post) => (
+                      <PostCard key={post._id} post={post} />
+                    ))}
+                  </div>
+                }
                 
                 {/* Pagination */}
-                <div className="mt-8 flex justify-center">
-                  <div className="flex space-x-2">
-                    <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100">
-                      &laquo; Prev
-                    </button>
-                    <button className="px-3 py-1 bg-[#688268] text-white rounded-md">1</button>
-                    <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100">2</button>
-                    <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100">3</button>
-                    <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100">
-                      Next &raquo;
-                    </button>
+                {!loading && !error && posts.length > 0 && (
+                  <div className="mt-8 flex justify-center">
+                    <div className="flex space-x-2">
+                      <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100">
+                        &laquo; Prev
+                      </button>
+                      <button className="px-3 py-1 bg-[#688268] text-white rounded-md">1</button>
+                      <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100">2</button>
+                      <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100">3</button>
+                      <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-100">
+                        Next &raquo;
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
         </div>
+        
+        {/* Create Post Modal */}
+        {renderCreatePostModal()}
       </div>
     );
 };

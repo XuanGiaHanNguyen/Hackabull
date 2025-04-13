@@ -26,7 +26,6 @@ function App() {
          {/* Protected routes - require authentication */}
          <Route element={<ProtectedRoute />}>
           <Route path='/market' element={<Marketplace/>}/>
-          {/* Add other protected routes here */}
         </Route>
         
         {/* Fallback route for unknown paths */}
