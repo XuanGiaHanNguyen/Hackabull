@@ -2,19 +2,40 @@ import React, { useState } from "react";
 import bg from "../../assets/bg/bg-4.png"
 import { SeedGreenIcon } from "../../assets/icon";
 import { Link } from "react-router-dom";
+import { loginUser } from './authService';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState("");
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
     const [rememberMe, setRememberMe] = useState(false);
 
-    const isFilled = username && password;
+    const isFilled = email && password;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Add your login logic here
-        console.log({ username, password, rememberMe });
-    };
+        setError('');
+        setLoading(true);
+    
+        try {
+          const data = await loginUser({ email, password });
+          
+          // Save user data
+          if (data.user) {
+            localStorage.setItem('userData', JSON.stringify(data.user));
+          }
+          
+          setLoading(false);
+          // Redirect to landing page or dashboard after login
+          navigate('/'); // or navigate to dashboard or another protected route
+        } catch (err) {
+          setLoading(false);
+          setError(err.message || 'Failed to login. Please try again.');
+        }
+      };
 
     return (
         <div
@@ -27,8 +48,9 @@ const Login = () => {
         >
             {/* left side: Login */}
             <div className="flex-1 bg-[#4d6b5a] h-screen flex flex-col justify-center items-center">
-                <div className="h-full w-full p-10">
-                    <div className="h-full w-full flex flex-col p-8">
+                <div className="h-full w-full p-8 flex flex-col items-center">
+                    <div className="h-full w-full flex flex-col p-9 mt-10 flex flex-col items-center">
+                        <div className="w-full px-12">
                         <Link to="/" className="flex flex-row items-center mb-6">
                             <div className="flex flex-row px-4 py-2 rounded-xl bg-[#eae9e3]">
                                 {SeedGreenIcon}
@@ -36,22 +58,25 @@ const Login = () => {
                             </div>
                         </Link>
 
-                        <h1 className="text-white font-bold text-3xl mb-6">
+                        <h1 className="text-white font-bold text-4xl mb-6">
                             Log In
                         </h1>
+                        
+                        <div className="flex flex-col items-center">
+                        {error && <div className="error-message">{error}</div>}
 
                         <form onSubmit={handleSubmit} className="flex flex-col space-y-3 w-full max-w-md">
                             <div className="flex flex-col space-y-2">
-                                <label htmlFor="username" className="text-white font-medium">
-                                    Username
+                                <label htmlFor="email" className="text-white font-medium">
+                                    Email
                                 </label>
                                 <input
                                     type="text"
-                                    id="username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    id="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="border-2 border-white/30 bg-white/10 text-white p-3 rounded-md focus:border-white focus:outline-none placeholder-white/60"
-                                    placeholder="Enter your username"
+                                    placeholder="Enter your email"
                                     required
                                 />
                             </div>
@@ -106,6 +131,9 @@ const Login = () => {
                                 </Link>
                             </div>
                         </form>
+
+                        </div>
+                        </div> 
                     </div>
                 </div>
             </div>

@@ -1,21 +1,48 @@
 import React, { useState } from "react";
 import bg from "../../assets/bg/bg-4.png";
 import { SeedGreenIcon } from "../../assets/icon";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { registerUser } from './authService'; // Import the auth service
 
 const Signup = () => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
     const [agreeTerms, setAgreeTerms] = useState(false);
 
-    const isFilled = username && email && password && confirmPassword && agreeTerms;
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+    
+    // Remove confirmPassword from the isFilled check
+    const isFilled = username && email && password && agreeTerms;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Add your signup logic here
-        console.log({ username, email, password, confirmPassword, agreeTerms });
+        
+        // Remove password matching validation
+        setLoading(true);
+        setError('');
+        
+        try {
+            // Call registerUser from authService
+            const userData = {
+                username,
+                email,
+                password
+            };
+            
+            await registerUser(userData);
+            
+            // Redirect to login page after successful registration
+            navigate('/login', { 
+                state: { message: 'Account created successfully! Please log in.' } 
+            });
+        } catch (err) {
+            setError(err.message || 'Registration failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -45,6 +72,13 @@ const Signup = () => {
                         <h1 className="text-white font-bold text-3xl mb-6">
                             Sign Up
                         </h1>
+
+                        {/* Show error messages */}
+                        {error && (
+                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                                {error}
+                            </div>
+                        )}
 
                         <form onSubmit={handleSubmit} className="flex flex-col space-y-3 w-full max-w-md">
                             <div className="flex flex-col space-y-2">
@@ -92,8 +126,6 @@ const Signup = () => {
                                 />
                             </div>
 
-            
-
                             <div className="flex items-center space-x-2 mt-2">
                                 <input
                                     type="checkbox"
@@ -110,12 +142,12 @@ const Signup = () => {
 
                             <button
                                 type="submit"
-                                disabled={!isFilled}
+                                disabled={!isFilled || loading}
                                 className={`py-3 px-6 rounded-md font-medium mt-4 ${
-                                    isFilled ? "bg-white text-[#4d6b5a] hover:bg-gray-100" : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                                    isFilled && !loading ? "bg-white text-[#4d6b5a] hover:bg-gray-100" : "bg-gray-400 text-gray-700 cursor-not-allowed"
                                 }`}
                             >
-                                Create Account
+                                {loading ? "Creating Account..." : "Create Account"}
                             </button>
 
                             <div className="mt-6 text-center">
