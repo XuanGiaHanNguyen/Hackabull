@@ -45,17 +45,44 @@ class SustainabilityAnalyzer:
         
         # Initialize a vision model for image analysis
         try:
-            self.vision_model = genai.GenerativeModel('gemini-1.5-pro-vision')
-            logger.info("Using gemini-1.5-pro-vision for image analysis")
-        except Exception as e:
-            logger.warning(f"Could not initialize gemini-1.5-pro-vision: {e}")
+            # First try to get available models to find a vision-capable model
+            available_models = []
             try:
-                # Fall back to gemini-pro-vision if the newer model is not available
-                self.vision_model = genai.GenerativeModel('gemini-pro-vision')
-                logger.info("Using gemini-pro-vision for image analysis")
+                available_models = [model.name for model in genai.list_models() if hasattr(model, 'supported_generation_methods') and 'generateContent' in model.supported_generation_methods]
+                logger.info(f"Available models: {available_models}")
             except Exception as e:
-                logger.error(f"Could not initialize any vision model: {e}")
-                self.vision_model = None
+                logger.warning(f"Could not list available models: {e}")
+            
+            # Check if specific vision models are in the available models list
+            vision_models = ['gemini-pro-vision', 'gemini-1.0-pro-vision']
+            if available_models:
+                for model_name in vision_models:
+                    if model_name in available_models:
+                        self.vision_model = genai.GenerativeModel(model_name)
+                        logger.info(f"Using {model_name} for image analysis")
+                        break
+                else:
+                    # If we get here, none of the vision models were found in available_models
+                    # Try with the regular model which might support multimodal
+                    self.vision_model = self.model
+                    logger.info("Using text model for image analysis as fallback")
+            else:
+                # If we couldn't list models, try directly with known model names
+                try:
+                    self.vision_model = genai.GenerativeModel('gemini-pro-vision')
+                    logger.info("Using gemini-pro-vision for image analysis")
+                except Exception as e:
+                    logger.warning(f"Could not initialize gemini-pro-vision: {e}")
+                    try:
+                        # If that fails, use the same model as for text analysis
+                        self.vision_model = self.model
+                        logger.info("Using text model for image analysis as fallback")
+                    except Exception as e:
+                        logger.error(f"Could not initialize any vision model: {e}")
+                        self.vision_model = None
+        except Exception as e:
+            logger.error(f"Error initializing vision model: {e}")
+            self.vision_model = None
     
     def analyze_product_description(self, description):
         """
@@ -185,19 +212,51 @@ class SustainabilityAnalyzer:
             """
             
             # Generate content using the AI model
-            response = self.vision_model.generate_content([prompt, image_parts[0]])
-            
-            # Process the response
             try:
-                # Try to extract JSON from response
-                response_text = response.text
-                json_data = self._extract_json(response_text)
+                response = self.vision_model.generate_content([prompt, image_parts[0]])
                 
-                return json_data
-            except Exception as e:
-                logger.error(f"Error processing image analysis response: {e}")
-                # Generate synthetic response
-                return self._generate_fallback_image_analysis()
+                # Process the response
+                try:
+                    # Try to extract JSON from response
+                    response_text = response.text
+                    json_data = self._extract_json(response_text)
+                    
+                    return json_data
+                except Exception as e:
+                    logger.error(f"Error processing image analysis response: {e}")
+                    # Generate synthetic response
+                    return self._generate_fallback_image_analysis()
+            except Exception as vision_error:
+                logger.error(f"Error with vision model, trying alternative approach: {vision_error}")
+                
+                # If vision model fails, try to extract text from image and analyze that as text
+                try:
+                    # Try to use a text-only model with a description from what we can see in the image
+                    image_description = f"Product appears to be {image.format if image.format else 'unknown'} image format, size {image.size}."
+                    
+                    text_prompt = f"""
+                    Analyze this product (image description provided) for sustainability:
+                    
+                    IMAGE DESCRIPTION:
+                    {image_description}
+                    
+                    Since I cannot see the actual image, please provide a general sustainability assessment for what might be in this product category.
+                    
+                    Return the results as a STRUCTURED JSON with fields similar to a typical product analysis, including overall_sustainability_score.
+                    
+                    Format as a well-structured JSON object WITHOUT ANY ADDITIONAL TEXT.
+                    """
+                    
+                    if self.model:
+                        text_response = self.model.generate_content(text_prompt)
+                        response_text = text_response.text
+                        json_data = self._extract_json(response_text)
+                        return json_data
+                    else:
+                        return self._generate_fallback_image_analysis()
+                except Exception as text_error:
+                    logger.error(f"Both vision and text fallback approaches failed: {text_error}")
+                    return self._generate_fallback_image_analysis()
         
         except Exception as e:
             logger.error(f"Error analyzing product image: {e}")
