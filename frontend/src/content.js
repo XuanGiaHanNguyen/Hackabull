@@ -1,6 +1,7 @@
 // content.js - Handles screen capturing on demand
 
 // Configuration
+
 const config = {
   captureDelay: 500,      // Delay between captures in ms
   scrollStep: 800,        // How many pixels to scroll each time

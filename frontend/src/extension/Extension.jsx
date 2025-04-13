@@ -124,10 +124,6 @@ function ExtensionPopup() {
                 </div>
             )}
 
-            <div className="px-5 py-3 text-gray-600 text-center border-t border-b border-gray-200">
-                {product ? productTitle : "Product analysis"}
-            </div>
-
             {/* Tabs */}
             <div className="flex border-b border-gray-200">
                 <button
