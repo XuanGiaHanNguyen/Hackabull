@@ -22,37 +22,37 @@ class EcoRecommendationEngine:
         """Find eco-friendly alternatives to a given product"""
         try:
             logger.debug(f"Finding alternatives for: {product_description[:50]}...")
-            
+
             # Extract product type from description
             product_type = self._extract_product_type(product_description)
             logger.debug(f"Extracted product type: {product_type}")
-            
+
             # If we couldn't determine the product type, use the category or fallback to general
             if not product_type and category:
                 product_type = category
             elif not product_type:
                 product_type = "general"
-                
+
             # Generate eco-friendly alternatives specific to the product type
             alternatives = self._generate_specific_alternatives(product_type, product_description)
-            
+
             # If we have alternatives, return them
             if alternatives:
                 return alternatives
-                
+
             # If no products found, get generic eco alternatives for the category
             return self.generate_eco_alternatives_from_category(category or product_type or "general")
-            
+
         except Exception as e:
             logger.error(f"Error finding alternatives: {str(e)}")
             return []
-            
+
     def _extract_product_type(self, description):
         """Extract the product type from a description"""
         try:
             # First look for exact product matches
             description_lower = description.lower()
-            
+
             # Common product types with their categories
             product_keywords = {
                 "clothing": ["shirt", "tshirt", "t-shirt", "pants", "jeans", "jacket", "hoodie", "sweater", "dress", "skirt", "socks", "underwear", "clothing", "apparel", "shoes", "sneakers", "boots", "footwear", "fleece"],
@@ -63,34 +63,34 @@ class EcoRecommendationEngine:
                 "toys": ["toy", "game", "puzzle", "doll", "action figure", "board game", "bike", "bicycle", "scooter", "ball", "play"],
                 "outdoor": ["tent", "backpack", "sleeping bag", "camping", "hiking", "fishing", "grill", "garden", "plant", "pot", "outdoor", "patio", "lawn", "canopy"]
             }
-            
+
             # Convert description to lowercase for case-insensitive matching
             desc_lower = description.lower()
-            
+
             # Check for direct matches of product type in the description
             for product_type, keywords in product_keywords.items():
                 for keyword in keywords:
                     if keyword in desc_lower:
                         return product_type
-            
+
             # If we couldn't determine the type, return None
             return None
-        
+
         except Exception as e:
             logger.error(f"Error extracting product type: {str(e)}")
             return None
-            
+
     def _generate_specific_alternatives(self, product_type, description):
         """Generate specific eco-friendly alternatives based on product type"""
         alternatives = []
-        
+
         # Extract more specific product category
         specific_product = self._get_specific_product(product_type, description)
         logger.debug(f"Specific product identified: {specific_product}")
-        
+
         # Create alternatives based on specific product eco-store data
         eco_alternatives = self._get_eco_friendly_products(product_type, specific_product)
-        
+
         if eco_alternatives:
             for alt in eco_alternatives:
                 alt_product = {
@@ -99,14 +99,14 @@ class EcoRecommendationEngine:
                     'price': alt['price'],
                     'url': alt['url']
                 }
-                
+
                 alternatives.append({
                     'product': alt_product,
                     'improvement_reasons': alt['eco_features']
                 })
-        
+
         return alternatives
-        
+
     def _get_specific_product(self, product_type, description):
         """Get more specific product name from the description"""
         try:
@@ -155,23 +155,23 @@ class EcoRecommendationEngine:
                     "patio": ["patio", "outdoor furniture", "umbrella", "grill", "bbq"]
                 }
             }
-            
+
             desc_lower = description.lower()
-            
+
             # If we have a known product type, check for subtypes
             if product_type in product_subtypes:
                 for subtype, keywords in product_subtypes[product_type].items():
                     for keyword in keywords:
                         if keyword in desc_lower:
                             return subtype
-            
+
             # If no specific subtype found, return the general product type
             return product_type
-            
+
         except Exception as e:
             logger.error(f"Error getting specific product: {str(e)}")
             return product_type
-        
+
     def _get_eco_friendly_products(self, product_type, specific_product):
         """Get eco-friendly product data for a specific product type using advanced search"""
         try:
@@ -179,7 +179,7 @@ class EcoRecommendationEngine:
             from bs4 import BeautifulSoup
             import requests
             import random
-            
+
             # Search various eco-friendly marketplaces
             eco_stores = [
                 "https://earthhero.com",
@@ -187,10 +187,10 @@ class EcoRecommendationEngine:
                 "https://thegoodtrade.com",
                 "https://zerowastestore.com"
             ]
-            
+
             products = []
             headers = {'User-Agent': 'Mozilla/5.0'}
-            
+
             try:
                 # Search each store
                 for store in eco_stores[:2]:  # Limit to 2 stores for faster response
@@ -213,7 +213,7 @@ class EcoRecommendationEngine:
                         continue
             except Exception as e:
                 logger.warning(f"Error in web search: {e}")
-            
+
             # Fallback to database if web search failed
             if not products:
                 # Database of eco-friendly alternatives by product type
@@ -359,18 +359,18 @@ class EcoRecommendationEngine:
                     }
                 ]
             }
-            
+
             # Check for specific product first
             if specific_product in eco_products_db:
                 return eco_products_db[specific_product]
-            
+
             # Check for general product type
             if product_type in eco_products_db:
                 return eco_products_db[product_type]
-                
+
             # Fall back to empty list if no matches
             return []
-            
+
         except Exception as e:
             logger.error(f"Error getting eco-friendly products: {str(e)}")
             return []
@@ -434,12 +434,12 @@ class EcoRecommendationEngine:
                     "general": "https://earthhero.com/collections/all-products"
                 }
             }
-            
+
             # Get appropriate URLs based on category, prioritizing mainstream shopping sites
             category_key = category.lower()
             if category_key not in ["clothing", "electronics", "toys", "home", "beauty", "food"]:
                 category_key = "general"
-                
+
             # Define mainstream store names for better descriptions
             store_names = {
                 "amazon": "Amazon",
@@ -450,21 +450,21 @@ class EcoRecommendationEngine:
                 "etsy": "Etsy",
                 "earthhero": "EarthHero"
             }
-            
+
             # Create alternatives from prioritized stores
             fallback_alternatives = []
-            
+
             # First prioritize Amazon, Walmart, Target
             for store in ["amazon", "walmart", "target", "bestbuy", "ebay", "etsy"]:
                 if category_key in store_urls[store]:
                     store_url = store_urls[store][category_key]
-                    
+
                     # Create description based on store
                     if store in ["amazon", "walmart", "target", "bestbuy", "ebay"]:
                         description = f"Find eco-friendly and sustainable {category} options available at {store_names[store]}. Many products feature recycled materials and sustainable manufacturing."
                     else:
                         description = f"Handmade eco-friendly {category} options from small sustainable businesses on {store_names[store]}."
-                    
+
                     # Create improvement reasons based on store and category
                     reasons = []
                     if store in ["amazon", "walmart", "target"]:
@@ -485,7 +485,7 @@ class EcoRecommendationEngine:
                             "Offers eco-friendly alternatives", 
                             "Energy-efficient options available"
                         ]
-                    
+
                     # Add to alternatives
                     fallback_alternatives.append({
                         'product': {
@@ -498,11 +498,11 @@ class EcoRecommendationEngine:
                         'improvement': 4,
                         'improvement_reasons': reasons
                     })
-                    
+
                     # Only include 3 alternatives
                     if len(fallback_alternatives) >= 3:
                         break
-            
+
             # If we don't have enough alternatives, add from eco-stores
             if len(fallback_alternatives) < 3:
                 # Add EarthHero as a fallback
@@ -523,7 +523,7 @@ class EcoRecommendationEngine:
                             "Carbon-neutral shipping"
                         ]
                     })
-            
+
             # Ensure we have exactly 3 alternatives
             while len(fallback_alternatives) < 3:
                 # Add a generic Amazon alternative if we need more
@@ -542,12 +542,12 @@ class EcoRecommendationEngine:
                         "Products with recycled content"
                     ]
                 })
-            
+
             # Limit to 3 alternatives
             fallback_alternatives = fallback_alternatives[:3]
-            
+
             return fallback_alternatives
-            
+
         except Exception as e:
             logger.error(f"Error generating alternatives for category {category}: {str(e)}")
             return []
@@ -557,10 +557,10 @@ class EcoRecommendationEngine:
         try:
             # Parse the materials string into a list
             material_list = [m.strip() for m in materials.split(',')]
-            
+
             # Define some common sustainable alternatives
             alternatives = {}
-            
+
             for material in material_list:
                 if "plastic" in material.lower():
                     alternatives[material] = [
@@ -625,9 +625,9 @@ class EcoRecommendationEngine:
                             'considerations': 'May have different properties'
                         }
                     ]
-            
+
             return alternatives
-            
+
         except Exception as e:
             logger.error(f"Error finding material alternatives: {str(e)}")
             return {}
@@ -637,7 +637,7 @@ class EcoRecommendationEngine:
         try:
             if not alternative or 'product' not in alternative:
                 return ""
-                
+
             product = alternative['product']
             name = product.get('name', 'Unknown Product')
             price = product.get('price', 0)
@@ -645,20 +645,20 @@ class EcoRecommendationEngine:
             url = product.get('url', '#')
             image_url = product.get('image_url', '')
             store = self._get_store_name(url)
-            
+
             # Generate sustainability score
             eco_score = self._calculate_eco_score(alternative)
-            
+
             # Format sustainability badges
             badges = self._generate_sustainability_badges(alternative)
             badges_html = ''.join([f'<span class="sustainability-badge">{badge}</span>' for badge in badges])
-            
+
             # Format the improvement reasons
             improvement_reasons = alternative.get('improvement_reasons', [])
             reasons_html = ""
             for reason in improvement_reasons:
                 reasons_html += f'<div class="improvement-item"><i class="fas fa-leaf mr-2"></i>{reason}</div>'
-            
+
             # Generate eco stats
             eco_stats = self._generate_eco_stats(alternative)
             stats_html = """
@@ -677,7 +677,7 @@ class EcoRecommendationEngine:
                 </div>
             </div>
             """.format(eco_score, random.randint(60, 100), random.randint(30, 70))
-            
+
             # Create the formatted HTML with enhanced styling
             html = f"""
             <div class="product-card">
@@ -689,29 +689,28 @@ class EcoRecommendationEngine:
                 </div>
                 <div class="product-price">${price:.2f}</div>
                 <div class="product-description">{description}</div>
-                
+
                 {badges_html}
-                
+
                 {stats_html}
-                
+
                 <div class="improvements-container">
                     <h6><i class="fas fa-leaf mr-2"></i>Sustainability Improvements</h6>
                     {reasons_html}
                 </div>
-                
+
                 <a href="{url}" class="product-link" target="_blank">
                     <img src="/static/img/{store.lower()}.png" class="store-icon" alt="{store}"/>
                     View on {store}
                 </a>
             </div>
             """
-            
             return html
-            
+
         except Exception as e:
             logger.error(f"Error formatting alternative: {str(e)}")
             return f"<div class=\"alert alert-danger\">Error formatting product: {str(e)}</div>"
-            
+
     def _get_store_name(self, url):
         """Extract store name from URL"""
         if "amazon" in url:
@@ -724,11 +723,11 @@ class EcoRecommendationEngine:
             return "EarthHero"
         else:
             return "Shop"
-            
+
     def _calculate_eco_score(self, alternative):
         """Calculate eco-friendliness score"""
         score = 7.0  # Base score
-        
+
         # Add points for various factors
         if 'recycled' in str(alternative).lower():
             score += 1
@@ -738,15 +737,15 @@ class EcoRecommendationEngine:
             score += 0.5
         if 'biodegradable' in str(alternative).lower():
             score += 0.5
-            
+
         # Cap at 10
         return min(10, score)
-        
+
     def _generate_sustainability_badges(self, alternative):
         """Generate relevant sustainability badges"""
         badges = []
         text = str(alternative).lower()
-        
+
         if 'recycled' in text:
             badges.append('♻️ Recycled Materials')
         if 'organic' in text:
@@ -757,9 +756,9 @@ class EcoRecommendationEngine:
             badges.append('🤝 Fair Trade')
         if 'eco' in text:
             badges.append('🌍 Eco-Friendly')
-            
+
         return badges[:3]  # Limit to 3 badges
-        
+
     def _generate_eco_stats(self, alternative):
         """Generate eco-friendly statistics"""
         return {
@@ -767,9 +766,77 @@ class EcoRecommendationEngine:
             'recycled_content': random.randint(60, 100),
             'co2_reduction': random.randint(30, 70)
         }
-            
-            return html
-            
-        except Exception as e:
-            logger.error(f"Error formatting alternative: {str(e)}")
-            return f"<div class=\"alert alert-danger\">Error formatting product: {str(e)}</div>"
+
+    def format_alternative_for_display(self, alternative):
+        """Format a product alternative for display with enhanced styling"""
+        try:
+            if not alternative or 'product' not in alternative:
+                return ""
+
+            product = alternative['product']
+            name = product.get('name', 'Unknown Product')
+            price = product.get('price', 0)
+            description = product.get('description', '')
+            url = product.get('url', '#')
+            image_url = product.get('image_url', '')
+            store = self._get_store_name(url)
+
+            # Generate sustainability score
+            eco_score = self._calculate_eco_score(alternative)
+
+            # Format sustainability badges
+            badges = self._generate_sustainability_badges(alternative)
+            badges_html = ''.join([f'<span class="sustainability-badge">{badge}</span>' for badge in badges])
+
+            # Format the improvement reasons
+            improvement_reasons = alternative.get('improvement_reasons', [])
+            reasons_html = ""
+            for reason in improvement_reasons:
+                reasons_html += f'<div class="improvement-item"><i class="fas fa-leaf mr-2"></i>{reason}</div>'
+
+            # Generate eco stats
+            eco_stats = self._generate_eco_stats(alternative)
+            stats_html = """
+            <div class="eco-stats">
+                <div class="eco-stat">
+                    <div class="eco-stat-value">{:.1f}/10</div>
+                    <div class="eco-stat-label">Eco Score</div>
+                </div>
+                <div class="eco-stat">
+                    <div class="eco-stat-value">{}%</div>
+                    <div class="eco-stat-label">Recycled</div>
+                </div>
+                <div class="eco-stat">
+                    <div class="eco-stat-value">{}%</div>
+                    <div class="eco-stat-label">CO₂ Reduced</div>
+                </div>
+            </div>
+            """.format(eco_score, random.randint(60, 100), random.randint(30, 70))
+
+            # Create the formatted HTML with enhanced styling
+            html = f"""
+            <div class="product-card">
+                <span class="eco-badge">Eco-Friendly</span>
+                {f'<img src="{image_url}" class="product-image" alt="{name}">' if image_url else ''}
+                <div class="product-name">{name}</div>
+                <div class="rating-stars">
+                    {'★' * round(eco_score/2)}{'☆' * (5 - round(eco_score/2))}
+                </div>
+                <div class="product-price">${price:.2f}</div>
+                <div class="product-description">{description}</div>
+
+                {badges_html}
+
+                {stats_html}
+
+                <div class="improvements-container">
+                    <h6><i class="fas fa-leaf mr-2"></i>Sustainability Improvements</h6>
+                    {reasons_html}
+                </div>
+
+                <a href="{url}" class="product-link" target="_blank">
+                    <img src="/static/img/{store.lower()}.png" class="store-icon" alt="{store}"/>
+                    View on {store}
+                </a>
+            </div>
+            """
