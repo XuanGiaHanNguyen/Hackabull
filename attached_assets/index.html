@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoScan - Sustainability Product Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-leaf me-2"></i>EcoScan</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#analyze">Analyze Product</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#image-analysis">Image Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#categories">Browse Categories</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#materials">Material Alternatives</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="jumbotron p-4 bg-light rounded">
+                    <h1 class="display-5">Sustainable Product Analysis</h1>
+                    <p class="lead">Analyze products for sustainability, find eco-friendly alternatives, and detect greenwashing with AI-powered insights.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Analysis Section -->
+        <section id="analyze" class="my-5">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="fas fa-search me-2"></i>Analyze Product Description</h3>
+                </div>
+                <div class="card-body">
+                    <form id="analyze-form">
+                        <div class="mb-3">
+                            <label for="product-description" class="form-label">Product Description</label>
+                            <textarea class="form-control" id="product-description" rows="4" placeholder="Enter a detailed product description..." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-category" class="form-label">Product Category (Optional)</label>
+                            <input type="text" class="form-control" id="product-category" placeholder="e.g., clothing, electronics, food...">
+                        </div>
+                        <div class="d-flex">
+                            <button type="submit" class="btn btn-success me-2"><i class="fas fa-chart-pie me-2"></i>Analyze Sustainability</button>
+                            <button type="button" id="find-alternatives-btn" class="btn btn-primary me-2"><i class="fas fa-exchange-alt me-2"></i>Find Alternatives</button>
+                            <button type="button" id="check-greenwashing-btn" class="btn btn-warning"><i class="fas fa-exclamation-triangle me-2"></i>Check Greenwashing</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4" id="analysis-results" style="display: none;">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h3><i class="fas fa-chart-bar me-2"></i>Sustainability Analysis Results</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="analysis-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4" id="greenwashing-results" style="display: none;">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-dark">
+                        <h3><i class="fas fa-exclamation-circle me-2"></i>Greenwashing Assessment</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="greenwashing-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4" id="alternatives-results" style="display: none;">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3><i class="fas fa-leaf me-2"></i>Eco-Friendly Alternatives</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="alternatives-content" class="row"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Image Analysis Section -->
+        <section id="image-analysis" class="my-5">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="fas fa-camera me-2"></i>Analyze Product from Image</h3>
+                </div>
+                <div class="card-body">
+                    <form id="image-analysis-form" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="product-image" class="form-label">Product Image</label>
+                            <input class="form-control" type="file" id="product-image" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-image me-2"></i>Analyze Image</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4" id="image-analysis-results" style="display: none;">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h3><i class="fas fa-image me-2"></i>Image Analysis Results</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="image-analysis-content"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Categories Section -->
+        <section id="categories" class="my-5">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="fas fa-tags me-2"></i>Browse Eco-Friendly Products by Category</h3>
+                </div>
+                <div class="card-body">
+                    <div id="categories-list" class="row"></div>
+                </div>
+            </div>
+
+            <div class="mt-4" id="category-results" style="display: none;">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3 id="category-title"><i class="fas fa-list me-2"></i>Category Products</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="category-content" class="row"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Materials Section -->
+        <section id="materials" class="my-5">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="fas fa-flask me-2"></i>Find Sustainable Material Alternatives</h3>
+                </div>
+                <div class="card-body">
+                    <form id="materials-form">
+                        <div class="mb-3">
+                            <label for="materials-list" class="form-label">Materials/Ingredients</label>
+                            <input type="text" class="form-control" id="materials-list" placeholder="Enter materials or ingredients separated by commas (e.g., plastic, cotton, polyester)" required>
+                        </div>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-recycle me-2"></i>Find Sustainable Alternatives</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4" id="materials-results" style="display: none;">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h3><i class="fas fa-leaf me-2"></i>Sustainable Material Alternatives</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="materials-content"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-leaf me-2"></i>EcoScan - Sustainability Analyzer</h5>
+                    <p>Powered by Gemini API</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; 2025 EcoScan - All Rights Reserved</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
